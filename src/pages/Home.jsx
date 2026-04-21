@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext';
 import { categories } from '../data/mock';
 import ProductCard from '../components/ProductCard';
 import tiendaImg from '../images/tienda.jpg';
+import bannerImg from '../images/banner.png';
 import { 
   Search, ArrowRight, Sparkles, ShoppingBag, 
   Coffee, Carrot, Cookie, Milk, SearchX, 
@@ -26,8 +27,38 @@ const getCategoryIcon = (cat) => {
 export default function Home() {
   const { products, globalSearchQuery, setGlobalSearchQuery } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('Productos Recomendados');
+  const [currentSlide, setCurrentSlide] = useState(0);
   const gridRef = useRef(null);
   const scrollContainerRef = useRef(null);
+
+  const slides = [
+    {
+      id: 1,
+      image: tiendaImg,
+      badge: "ABIERTO LAS 24HS",
+      title: "Tu market más completo",
+      highlight: "a un clic de distancia.",
+      desc: "Productos locales y de primera calidad, seleccionados cuidadosamente para tu día a día."
+    },
+    {
+      id: 2,
+      image: bannerImg,
+      badge: "NUEVAS OFERTAS",
+      title: "Descubre los mejores",
+      highlight: "precios cada semana.",
+      desc: "Aprovecha nuestros descuentos especiales en la sección de despensa y frescos."
+    }
+  ];
+
+  // Auto-play del slider
+  useEffect(() => {
+    if (!globalSearchQuery) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+      }, 5000); // Cambia cada 5 segundos
+      return () => clearInterval(timer);
+    }
+  }, [globalSearchQuery, slides.length]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -56,32 +87,58 @@ export default function Home() {
 
   return (
     <div className="w-full bg-surface">
-      {/* Hero Section */}
-      <section className="mb-12 sm:mb-20 pt-0">
+      {/* Hero Section / Banner Slider */}
+      <section className="mb-12 sm:mb-20 pt-0 relative">
         <div className="relative h-[380px] sm:h-[500px] md:h-[600px] w-full mx-auto overflow-hidden bg-surface-container-lowest shadow-sm">
-          <img 
-            src={tiendaImg}
-            alt="Tienda Benmarket" 
-            className="absolute inset-0 w-full h-full object-cover object-top"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20"></div>
-          
-          <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-12 md:px-24 max-w-7xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-tertiary/90 backdrop-blur-sm text-on-tertiary text-[10px] sm:text-xs font-bold px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full w-fit mb-4 sm:mb-6 shadow-sm border border-tertiary-container/30">
-              <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-white"></span>
-              </span>
-              ABIERTO LAS 24HS
-            </div>
-            
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-tight mb-3 sm:mb-6 tracking-tight font-headline">
-              Tu market más completo <br />
-              <span className="text-primary-container">a un clic de distancia.</span>
-            </h1>
-            <p className="text-surface-variant font-medium text-base sm:text-xl mb-6 sm:mb-8 max-w-lg leading-relaxed">
-              Productos locales y de primera calidad, seleccionados cuidadosamente para tu día a día.
-            </p>
+          {/* Slider Container */}
+          <div 
+            className="flex w-full h-full transition-transform duration-1000 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slides.map((slide, index) => (
+              <div key={slide.id} className="w-full h-full shrink-0 relative">
+                <img 
+                  src={slide.image}
+                  alt={`Banner ${index + 1}`} 
+                  className="absolute inset-0 w-full h-full object-cover object-top"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20"></div>
+                
+                <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-12 md:px-24 max-w-7xl mx-auto">
+                  <div className="inline-flex items-center gap-2 bg-tertiary/90 backdrop-blur-sm text-on-tertiary text-[10px] sm:text-xs font-bold px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full w-fit mb-4 sm:mb-6 shadow-sm border border-tertiary-container/30">
+                    <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-white"></span>
+                    </span>
+                    {slide.badge}
+                  </div>
+                  
+                  <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-tight mb-3 sm:mb-6 tracking-tight font-headline transition-all duration-700 delay-300 opacity-100 translate-y-0">
+                    {slide.title} <br />
+                    <span className="text-primary-container">{slide.highlight}</span>
+                  </h1>
+                  <p className="text-surface-variant font-medium text-base sm:text-xl mb-6 sm:mb-8 max-w-lg leading-relaxed transition-all duration-700 delay-500 opacity-100 translate-y-0">
+                    {slide.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Dots Indicators */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`transition-all duration-300 rounded-full ${
+                  currentSlide === index 
+                    ? 'w-8 h-2.5 bg-primary shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
+                    : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
+                }`}
+                aria-label={`Ir a la diapositiva ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -187,40 +244,6 @@ export default function Home() {
             </button>
           </div>
         )}
-      </section>
-
-      {/* Newsletter Section */}
-      <section className="px-4 sm:px-6 mb-12 sm:mb-20 max-w-5xl mx-auto">
-        <div className="relative bg-gradient-to-br from-primary to-secondary rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 md:p-12 flex flex-col items-center text-center overflow-hidden shadow-lg sm:shadow-xl shadow-primary/20">
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-10 pointer-events-none">
-            <svg viewBox="0 0 400 400" className="absolute top-[-30%] left-[-10%] w-[70%] h-[70%]"><circle cx="200" cy="200" r="200" fill="white"/></svg>
-            <svg viewBox="0 0 400 400" className="absolute bottom-[-30%] right-[-10%] w-[50%] h-[50%]"><circle cx="200" cy="200" r="200" fill="white"/></svg>
-          </div>
-          
-          <div className="relative z-10 flex flex-col items-center w-full">
-            <div className="bg-white/20 backdrop-blur-md p-2.5 sm:p-3 rounded-xl mb-3 sm:mb-5">
-              <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-white" strokeWidth={1.5} />
-            </div>
-            <h2 className="font-headline text-xl sm:text-3xl md:text-4xl font-extrabold tracking-tight mb-2 sm:mb-4 text-white">Únete al Colectivo</h2>
-            <p className="text-white/90 font-medium text-xs sm:text-base max-w-lg mb-5 sm:mb-8 leading-relaxed px-2">
-              Suscríbete para recibir acceso anticipado, historias de diseño y ofertas exclusivas para miembros. ¡10% de descuento en tu primera compra!
-            </p>
-            <form className="w-full max-w-md flex flex-col sm:flex-row gap-2 sm:gap-2 p-0 sm:p-1.5 sm:bg-white/10 sm:backdrop-blur-md sm:rounded-2xl" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                className="flex-1 bg-white border-none px-4 py-3 sm:py-3.5 rounded-xl focus:ring-4 focus:ring-white/30 text-on-surface text-sm font-medium placeholder:text-outline shadow-sm" 
-                placeholder="Tu correo electrónico..." 
-                type="email" 
-                required 
-              />
-              <button 
-                type="submit" 
-                className="bg-on-primary text-primary px-6 py-3 sm:py-3.5 rounded-xl font-bold active:scale-95 transition-all shadow-sm hover:shadow-md hover:bg-surface-container-lowest text-sm"
-              >
-                Suscribirme
-              </button>
-            </form>
-          </div>
-        </div>
       </section>
     </div>
   );

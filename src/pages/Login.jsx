@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Store, LogIn, UserCircle, Calculator, Wallet, ShieldCheck } from 'lucide-react';
 import { users } from '../data/mock';
+import logoImg from '../images/logo.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -50,13 +51,10 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
-            <div className="mx-auto h-20 w-20 bg-benmarket-600 text-white rounded-3xl flex items-center justify-center shadow-xl shadow-benmarket-200 mb-6 transform rotate-3 hover:rotate-0 transition-transform">
-              <Store className="w-12 h-12" />
+            <div className="mx-auto mb-8 flex justify-center">
+              <img src={logoImg} alt="Logo Benmarket" className="h-16 sm:h-20 w-auto object-contain drop-shadow-md" />
             </div>
             <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">Iniciar Sesión</h2>
-            <p className="mt-3 text-lg text-slate-500">
-              Ingresa a tu cuenta de <span className="font-bold text-benmarket-600">Benmarket</span>
-            </p>
           </div>
           
           <form id="login-form" className="mt-8 space-y-6 bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100" onSubmit={handleSubmit}>

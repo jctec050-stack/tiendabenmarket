@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Users, DollarSign, Calculator, Settings, BarChart } from 'lucide-react';
+import { ShoppingBag, Users, DollarSign, Calculator, Settings, BarChart, Package } from 'lucide-react';
 
 export default function Sidebar({ role }) {
   const location = useLocation();
@@ -8,12 +8,12 @@ export default function Sidebar({ role }) {
     Admin: [
       { path: '/dashboard', name: 'Dashboard Global', icon: BarChart },
       { path: '/dashboard/users', name: 'Gestión Usuarios', icon: Users },
-      { path: '/dashboard/products', name: 'Gestión Productos', icon: ShoppingBag },
+      { path: '/dashboard/products', name: 'Gestión Productos', icon: Package },
     ],
     Cajero: [
-      { path: '/dashboard', name: 'TPV / POS', icon: Calculator },
-      { path: '/dashboard/history', name: 'Historial de Ventas', icon: ShoppingBag },
+      { path: '/dashboard', name: 'Historial de Ventas', icon: ShoppingBag },
       { path: '/dashboard/arqueo', name: 'Arqueo de Caja', icon: DollarSign },
+      { path: '/dashboard/products', name: 'Gestión Productos', icon: Package },
     ],
     Tesoreria: [
       { path: '/dashboard', name: 'Resumen Diario', icon: BarChart },
@@ -25,7 +25,7 @@ export default function Sidebar({ role }) {
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 hidden md:block shrink-0 h-full overflow-y-auto shadow-sm">
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 mt-4">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname === link.path;

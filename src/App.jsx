@@ -12,6 +12,11 @@ import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
+import About from './pages/About';
+import Jobs from './pages/Jobs';
+import Shipping from './pages/Shipping';
+import Faq from './pages/Faq';
+import Contact from './pages/Contact';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -19,7 +24,6 @@ import UsersManager from './pages/UsersManager';
 import ProductsManager from './pages/ProductsManager';
 
 // Cajero Pages
-import POS from './pages/POS';
 import SalesHistory from './pages/SalesHistory';
 import Arqueo from './pages/Arqueo';
 
@@ -54,9 +58,9 @@ const DashboardRouter = () => {
     case 'Cajero':
       return (
         <Routes>
-          <Route path="/" element={<POS />} />
-          <Route path="/history" element={<SalesHistory />} />
+          <Route path="/" element={<SalesHistory />} />
           <Route path="/arqueo" element={<Arqueo />} />
+          <Route path="/products" element={<ProductsManager />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       );
@@ -85,6 +89,11 @@ export default function App() {
                 <Route index element={<Home />} />
                 <Route path="cart" element={<Cart />} />
                 <Route path="checkout" element={<Checkout />} />
+                <Route path="about" element={<About />} />
+                <Route path="jobs" element={<Jobs />} />
+                <Route path="shipping" element={<Shipping />} />
+                <Route path="faq" element={<Faq />} />
+                <Route path="contact" element={<Contact />} />
               </Route>
 
               {/* Ruta de Login independiente */}
