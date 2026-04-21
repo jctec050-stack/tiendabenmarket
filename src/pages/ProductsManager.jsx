@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { categories } from '../data/mock';
-import { Edit, Trash2, Plus, X } from 'lucide-react';
+import { Edit, Trash2, Plus, X, Upload, Download, FileJson } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 
 export default function ProductsManager() {
   const { products, addProduct, updateProduct, deleteProduct } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({ name: '', price: '', category: categories[0], stock: '', image: '' });
 
@@ -38,13 +39,78 @@ export default function ProductsManager() {
     setIsModalOpen(false);
   };
 
+  // Función para exportar productos a JSON
+  const handleExportData = () => {
+    const dataStr = JSON.stringify(products, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `benmarket_productos_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Función para importar productos desde JSON
+  const handleImportData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        if (Array.isArray(importedData)) {
+          // En un caso real, aquí deberíamos validar la estructura de cada objeto
+          // y llamar a un método del contexto como `importProducts(importedData)`
+          alert(`Simulación: Se importarían ${importedData.length} productos correctamente.`);
+        } else {
+          alert('El archivo no tiene el formato de array esperado.');
+        }
+      } catch (error) {
+        alert('Error al leer el archivo JSON. Asegúrate de que el formato sea correcto.');
+      }
+    };
+    reader.readAsText(file);
+    // Limpiar el input para permitir importar el mismo archivo de nuevo si es necesario
+    e.target.value = '';
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-slate-900">Catálogo de Productos</h1>
-        <button onClick={() => handleOpenModal()} className="btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Producto
-        </button>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          
+          <input 
+            type="file" 
+            accept=".json" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleImportData} 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()} 
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors border border-slate-300 shadow-sm"
+            title="Importar productos desde JSON"
+          >
+            <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Importar DB</span><span className="sm:hidden">Importar</span>
+          </button>
+
+          <button 
+            onClick={handleExportData} 
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors border border-slate-300 shadow-sm"
+            title="Exportar productos a JSON"
+          >
+            <Download className="w-4 h-4" /> <span className="hidden sm:inline">Exportar DB</span><span className="sm:hidden">Exportar</span>
+          </button>
+
+          <button onClick={() => handleOpenModal()} className="btn-primary flex-1 md:flex-none flex items-center justify-center gap-2 ml-auto md:ml-2">
+            <Plus className="w-4 h-4" /> Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <div className="card overflow-hidden">

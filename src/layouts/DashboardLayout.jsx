@@ -11,7 +11,7 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans pt-20">
       <Navbar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar role={user.role} />

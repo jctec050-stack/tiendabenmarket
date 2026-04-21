@@ -8,6 +8,7 @@ export const AppProvider = ({ children }) => {
   const [sales, setSales] = useState(mockSales);
   const [arqueos, setArqueos] = useState(mockArqueos);
   const [users, setUsers] = useState(mockUsers);
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
 
   // Funciones de Productos
   const addProduct = (product) => setProducts([...products, { ...product, id: Date.now() }]);
@@ -31,7 +32,8 @@ export const AppProvider = ({ children }) => {
       products, addProduct, updateProduct, deleteProduct,
       sales, addSale,
       arqueos, addArqueo, updateArqueoStatus,
-      users, addUser, updateUser, deleteUser
+      users, addUser, updateUser, deleteUser,
+      globalSearchQuery, setGlobalSearchQuery
     }}>
       {children}
     </AppContext.Provider>
