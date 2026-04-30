@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { categories } from '../data/mock';
 import ProductCard from '../components/ProductCard';
 import tiendaImg from '../images/tienda.jpg';
 import bannerImg from '../images/banner.png';
@@ -25,11 +24,17 @@ const getCategoryIcon = (cat) => {
 };
 
 export default function Home() {
-  const { products, globalSearchQuery, setGlobalSearchQuery } = useAppContext();
+  const { products, categories, globalSearchQuery, setGlobalSearchQuery } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('Productos Recomendados');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const gridRef = useRef(null);
   const scrollContainerRef = useRef(null);
+
+  // Volver a la primera página cuando cambie la categoría o la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, globalSearchQuery]);
 
   const slides = [
     {
@@ -84,6 +89,13 @@ export default function Home() {
     const matchesSearch = p.name.toLowerCase().includes(globalSearchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  const ITEMS_PER_PAGE = 24;
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const currentProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="w-full bg-surface">
@@ -221,12 +233,42 @@ export default function Home() {
           )}
         </div>
         
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-12">
-            {filteredProducts.map(product => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+        {currentProducts.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 md:grid-cols-3 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-12">
+              {currentProducts.map(product => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-12 sm:mt-16">
+                <button 
+                  onClick={() => {
+                    setCurrentPage(p => Math.max(1, p - 1));
+                    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl font-bold bg-surface-container border border-outline-variant/30 text-on-surface disabled:opacity-50 disabled:cursor-not-allowed hover:bg-surface-container-high transition-all active:scale-95 shadow-sm"
+                >
+                  Anterior
+                </button>
+                <span className="font-semibold text-slate-500 text-sm sm:text-base">
+                  Página {currentPage} de {totalPages}
+                </span>
+                <button 
+                  onClick={() => {
+                    setCurrentPage(p => Math.min(totalPages, p + 1));
+                    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl font-bold bg-primary text-on-primary shadow-md shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all active:scale-95"
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full py-16 sm:py-24 flex flex-col items-center justify-center text-outline bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-outline-variant/20 shadow-sm px-4 text-center">
             <div className="bg-surface-container-high p-4 sm:p-6 rounded-full mb-4 sm:mb-6">

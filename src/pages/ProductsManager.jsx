@@ -1,42 +1,90 @@
 import { useState, useRef } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { categories } from '../data/mock';
+import { supabase } from '../supabaseClient';
+import { compressImage } from '../utils/imageCompression';
 import { Edit, Trash2, Plus, X, Upload, Download, FileJson } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 
 export default function ProductsManager() {
-  const { products, addProduct, updateProduct, deleteProduct } = useAppContext();
+  const { products, categories, addProduct, updateProduct, deleteProduct } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [stockFilter, setStockFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const fileInputRef = useRef(null);
   
-  const [formData, setFormData] = useState({ name: '', price: '', category: categories[0], stock: '', image: '' });
+  const [formData, setFormData] = useState({ name: '', price: '', category: '', stock: '', image: '' });
+
+  const filteredProducts = products.filter(product => {
+    // Stock filter
+    if (stockFilter === 'in-stock' && product.stock <= 5) return false;
+    if (stockFilter === 'low-stock' && (product.stock === 0 || product.stock > 5)) return false;
+    if (stockFilter === 'out-of-stock' && product.stock > 0) return false;
+    
+    // Category filter
+    if (categoryFilter !== 'all' && product.category !== categoryFilter) return false;
+
+    return true;
+  });
 
   const handleOpenModal = (product = null) => {
+    setImageFile(null);
     if (product) {
       setEditingProduct(product);
       setFormData({ ...product });
     } else {
       setEditingProduct(null);
-      setFormData({ name: '', price: '', category: categories[0], stock: '', image: 'https://placehold.co/200x200/ef4444/white?text=Nuevo' });
+      setFormData({ name: '', price: '', category: categories.length > 0 ? categories[0] : '', stock: '', image: 'https://placehold.co/200x200/ef4444/white?text=Nuevo' });
     }
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const formattedData = {
-      ...formData,
-      price: parseFloat(formData.price),
-      stock: parseInt(formData.stock, 10)
-    };
+    setIsUploading(true);
+    
+    try {
+      let finalImageUrl = formData.image;
 
-    if (editingProduct) {
-      updateProduct(editingProduct.id, formattedData);
-    } else {
-      addProduct(formattedData);
+      if (imageFile) {
+        const compressed = await compressImage(imageFile);
+        const fileExt = compressed.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('productos')
+          .upload(fileName, compressed);
+          
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('productos')
+          .getPublicUrl(fileName);
+          
+        finalImageUrl = publicUrlData.publicUrl;
+      }
+
+      const formattedData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock, 10),
+        image: finalImageUrl
+      };
+
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, formattedData);
+      } else {
+        await addProduct(formattedData);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error guardando producto:', error);
+      alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setIsUploading(false);
     }
-    setIsModalOpen(false);
   };
 
   // Función para exportar productos a JSON
@@ -84,6 +132,26 @@ export default function ProductsManager() {
         <h1 className="text-2xl font-bold text-slate-900">Catálogo de Productos</h1>
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           
+          <select 
+            className="flex-1 md:flex-none px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+          >
+            <option value="all">Todas las categorías</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select 
+            className="flex-1 md:flex-none px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 outline-none focus:border-primary shadow-sm"
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+          >
+            <option value="all">Todos los estados</option>
+            <option value="in-stock">En Stock (&gt; 5)</option>
+            <option value="low-stock">Stock Bajo (1 - 5)</option>
+            <option value="out-of-stock">Sin Stock (0)</option>
+          </select>
+
           <input 
             type="file" 
             accept=".json" 
@@ -126,7 +194,7 @@ export default function ProductsManager() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {products.map(product => (
+              {filteredProducts.map(product => (
                 <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                   <td className="p-4 flex items-center gap-3">
                     <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200" />
@@ -187,12 +255,37 @@ export default function ProductsManager() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL Imagen</label>
-                <input required type="text" className="input-field" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Imagen del Producto</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-slate-100 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center">
+                    {formData.image && formData.image !== 'https://placehold.co/200x200/ef4444/white?text=Nuevo' ? (
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Upload className="w-6 h-6 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          setImageFile(file);
+                          setFormData({ ...formData, image: URL.createObjectURL(file) });
+                        }
+                      }}
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">JPG, PNG, WEBP. Se optimizará automáticamente.</p>
+                  </div>
+                </div>
               </div>
               <div className="pt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={isUploading}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isUploading}>
+                  {isUploading ? 'Guardando...' : 'Guardar'}
+                </button>
               </div>
             </form>
           </div>

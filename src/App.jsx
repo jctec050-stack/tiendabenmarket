@@ -11,6 +11,7 @@ import DashboardLayout from './layouts/DashboardLayout';
 import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import ProductDetails from './pages/ProductDetails';
 import Login from './pages/Login';
 import About from './pages/About';
 import Jobs from './pages/Jobs';
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Home />} />
                 <Route path="cart" element={<Cart />} />
+                <Route path="product/:id" element={<ProductDetails />} />
                 <Route path="checkout" element={<Checkout />} />
                 <Route path="about" element={<About />} />
                 <Route path="jobs" element={<Jobs />} />

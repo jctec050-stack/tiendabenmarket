@@ -1,17 +1,22 @@
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/currency';
 import { Heart, Plus, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   return (
-    <div className="group bg-surface-container-low rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 transition-all duration-300 hover:bg-surface-container-high hover:shadow-xl hover:shadow-primary/5 flex flex-col h-full cursor-pointer border border-outline-variant/20">
+    <div 
+      onClick={() => navigate(`/product/${product.id}`)}
+      className="group bg-surface-container-low rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 transition-all duration-300 hover:bg-surface-container-high hover:shadow-xl hover:shadow-primary/5 flex flex-col h-full cursor-pointer border border-outline-variant/20"
+    >
       <div className="relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-3 sm:mb-5 bg-white shadow-sm">
         <img 
           src={product.image} 
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-contain p-3 sm:p-5 transition-transform duration-700 group-hover:scale-110 mix-blend-multiply"
         />
         
         {/* Badges */}
@@ -33,7 +38,13 @@ export default function ProductCard({ product }) {
         </div>
 
         {/* Favorite Button */}
-        <button className="absolute top-2 right-2 sm:top-3 sm:right-3 h-7 w-7 sm:h-9 sm:w-9 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-white shadow-sm active:scale-90 transition-all z-10">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            // TODO: Toggle favorite logic here
+          }}
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 h-7 w-7 sm:h-9 sm:w-9 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-outline hover:text-primary hover:bg-white shadow-sm active:scale-90 transition-all z-10"
+        >
           <Heart className="w-3.5 h-3.5 sm:w-[18px] sm:h-[18px] transition-colors" />
         </button>
       </div>
