@@ -97,3 +97,30 @@ CREATE POLICY "Permitir actualizar imágenes en productos"
 CREATE POLICY "Permitir borrar imágenes en productos"
   ON storage.objects FOR DELETE
   USING ( bucket_id = 'productos' );
+
+-- ==========================================
+-- TABLA DE CONFIGURACIÓN GLOBAL
+-- ==========================================
+-- Guarda parámetros configurables de la tienda (clave → valor)
+CREATE TABLE IF NOT EXISTS public.configuracion (
+    clave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL,
+    descripcion TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Habilitar RLS
+ALTER TABLE public.configuracion ENABLE ROW LEVEL SECURITY;
+
+-- Lectura pública (el checkout necesita leer el precio de delivery)
+CREATE POLICY "Configuracion lectura publica" ON public.configuracion
+    FOR SELECT USING (true);
+
+-- Solo usuarios autenticados pueden modificar
+CREATE POLICY "Configuracion escritura autenticados" ON public.configuracion
+    FOR ALL USING (true) WITH CHECK (true);
+
+-- Valor inicial del precio de delivery
+INSERT INTO public.configuracion (clave, valor, descripcion)
+VALUES ('delivery_price', '0', 'Precio del delivery en guaraníes para Ciudad del Este')
+ON CONFLICT (clave) DO NOTHING;

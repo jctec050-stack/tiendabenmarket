@@ -10,12 +10,23 @@ export const AppProvider = ({ children }) => {
   const [arqueos, setArqueos] = useState(mockArqueos);
   const [users, setUsers] = useState(mockUsers);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [deliveryPrice, setDeliveryPrice] = useState(0);
 
   const [categories, setCategories] = useState([]);
   const [rawCategories, setRawCategories] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
+      // Fetch delivery price from configuracion table
+      const { data: configData, error: configError } = await supabase
+        .from('configuracion')
+        .select('valor')
+        .eq('clave', 'delivery_price')
+        .single();
+      if (!configError && configData) {
+        setDeliveryPrice(Number(configData.valor) || 0);
+      }
+
       // Fetch Categories
       const { data: catData, error: catError } = await supabase.from('categorias').select('*');
       if (catError) {
@@ -123,6 +134,19 @@ export const AppProvider = ({ children }) => {
   // Funciones de Ventas
   const addSale = (sale) => setSales([...sales, { ...sale, id: Date.now() }]);
 
+  // Funciones de Delivery
+  const updateDeliveryPrice = async (newPrice) => {
+    const price = Number(newPrice) || 0;
+    const { error } = await supabase
+      .from('configuracion')
+      .upsert({ clave: 'delivery_price', valor: String(price), updated_at: new Date().toISOString() }, { onConflict: 'clave' });
+    if (error) {
+      console.error('Error saving delivery price:', error);
+      throw error;
+    }
+    setDeliveryPrice(price);
+  };
+
   // Funciones de Arqueos
   const addArqueo = (arqueo) => setArqueos([...arqueos, { ...arqueo, id: Date.now() }]);
   const updateArqueoStatus = (id, status, notes) => setArqueos(arqueos.map(a => a.id === id ? { ...a, status, notes } : a));
@@ -139,7 +163,8 @@ export const AppProvider = ({ children }) => {
       sales, addSale,
       arqueos, addArqueo, updateArqueoStatus,
       users, addUser, updateUser, deleteUser,
-      globalSearchQuery, setGlobalSearchQuery
+      globalSearchQuery, setGlobalSearchQuery,
+      deliveryPrice, updateDeliveryPrice,
     }}>
       {children}
     </AppContext.Provider>

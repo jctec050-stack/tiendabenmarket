@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAppContext } from '../context/AppContext';
 import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User, Link2 } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 
@@ -10,6 +11,7 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 export default function Checkout() {
   const { cart, total, clearCart } = useCart();
   const { user } = useAuth();
+  const { deliveryPrice } = useAppContext();
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
 
@@ -19,7 +21,6 @@ export default function Checkout() {
     telefono: '',
     direccion: '',
     barrio: '',
-    ciudad: 'Asunción',
     google_maps: '',
     nota: '',
   });
@@ -30,7 +31,8 @@ export default function Checkout() {
 
   const buildWhatsAppMessage = () => {
     const clientName = `${formData.nombre} ${formData.apellido}`.trim();
-    const address = [formData.direccion, formData.barrio, formData.ciudad].filter(Boolean).join(', ');
+    const address = [formData.direccion, formData.barrio, 'Ciudad del Este'].filter(Boolean).join(', ');
+    const grandTotal = total + deliveryPrice;
 
     const itemLines = cart
       .map(item => `  • ${item.quantity}x ${item.name} → ${formatCurrency(item.price * item.quantity)}`)
@@ -48,7 +50,9 @@ export default function Checkout() {
       '🧾 *Detalle del pedido:*',
       itemLines,
       '',
-      `💰 *TOTAL: ${formatCurrency(total)}*`,
+      `🛋️ *Subtotal:* ${formatCurrency(total)}`,
+      `🚴 *Delivery (Cde):* ${formatCurrency(deliveryPrice)}`,
+      `💰 *TOTAL: ${formatCurrency(grandTotal)}*`,
       '',
       '_Pedido generado desde BenMarket Online_',
     ]
@@ -213,15 +217,12 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
                 <input
-                  required
                   type="text"
-                  name="ciudad"
-                  className="input-field"
-                  placeholder="Ej: Asunción"
-                  value={formData.ciudad}
-                  onChange={handleChange}
+                  readOnly
+                  className="input-field bg-slate-100 text-slate-500 cursor-not-allowed"
+                  value="Ciudad del Este"
                 />
               </div>
             </div>
@@ -288,12 +289,12 @@ export default function Checkout() {
                 <span>{formatCurrency(total)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Envío</span>
-                <span className="text-green-600 font-medium">A coordinar</span>
+                <span className="text-slate-600">🚴 Delivery (Ciudad del Este)</span>
+                <span className="font-semibold text-slate-800">{formatCurrency(deliveryPrice)}</span>
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
                 <span className="font-bold text-slate-900">Total</span>
-                <span className="text-2xl font-black text-benmarket-600">{formatCurrency(total)}</span>
+                <span className="text-2xl font-black text-benmarket-600">{formatCurrency(total + deliveryPrice)}</span>
               </div>
             </div>
 

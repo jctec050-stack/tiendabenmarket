@@ -2,6 +2,7 @@ import { useAppContext } from '../context/AppContext';
 import { Users, ShoppingBag, DollarSign, TrendingUp, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../utils/currency';
+import DeliveryConfig from '../components/DeliveryConfig';
 
 export default function AdminDashboard() {
   const { sales, products, users, addSale } = useAppContext();
@@ -47,6 +48,8 @@ export default function AdminDashboard() {
           <Zap className="w-4 h-4" /> Generar Venta de Prueba
         </button>
       </div>
+
+      <DeliveryConfig />
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((stat, i) => (
