@@ -1,48 +1,102 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
-import { CheckCircle, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
+
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 export default function Checkout() {
   const { cart, total, clearCart } = useCart();
-  const { addSale } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  const handleSimulatePayment = (e) => {
+  const [formData, setFormData] = useState({
+    nombre: user?.name?.split(' ')[0] || '',
+    apellido: user?.name?.split(' ').slice(1).join(' ') || '',
+    telefono: '',
+    direccion: '',
+    barrio: '',
+    ciudad: 'Asunción',
+    nota: '',
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const buildWhatsAppMessage = () => {
+    const clientName = `${formData.nombre} ${formData.apellido}`.trim();
+    const address = [formData.direccion, formData.barrio, formData.ciudad].filter(Boolean).join(', ');
+
+    const itemLines = cart
+      .map(item => `  • ${item.quantity}x ${item.name} → ${formatCurrency(item.price * item.quantity)}`)
+      .join('\n');
+
+    const message = [
+      '🛒 *NUEVO PEDIDO - BenMarket*',
+      '',
+      `👤 *Cliente:* ${clientName}`,
+      `📞 *Teléfono:* ${formData.telefono}`,
+      `📍 *Dirección:* ${address}`,
+      formData.nota ? `📝 *Nota:* ${formData.nota}` : null,
+      '',
+      '🧾 *Detalle del pedido:*',
+      itemLines,
+      '',
+      `💰 *TOTAL: ${formatCurrency(total)}*`,
+      '',
+      '_Pedido generado desde BenMarket Online_',
+    ]
+      .filter(line => line !== null)
+      .join('\n');
+
+    return message;
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-    // Simular retraso de red
-    setTimeout(() => {
-      const sale = {
-        total,
-        date: new Date().toISOString(),
-        items: cart.map(item => ({ productId: item.id, qty: item.quantity })),
-        type: 'Online'
-      };
-      addSale(sale);
-      clearCart();
-      setSuccess(true);
-      setLoading(false);
-    }, 1500);
+    const message = buildWhatsAppMessage();
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    clearCart();
+    setSuccess(true);
   };
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto text-center py-16 px-4">
-        <div className="bg-green-100 text-green-600 p-6 rounded-full inline-block mb-6 shadow-sm">
-          <CheckCircle className="w-20 h-20" />
+      <div className="max-w-lg mx-auto text-center py-16 px-4">
+        <div className="relative inline-block mb-8">
+          <div className="bg-green-100 p-8 rounded-full">
+            <CheckCircle className="w-20 h-20 text-green-500" />
+          </div>
+          <div className="absolute -bottom-2 -right-2 bg-[#25D366] p-3 rounded-full shadow-lg">
+            <MessageCircle className="w-6 h-6 text-white" />
+          </div>
         </div>
-        <h2 className="text-3xl font-extrabold text-slate-900 mb-4">¡Pago Exitoso!</h2>
-        <p className="text-lg text-slate-600 mb-8">Tu pedido ha sido procesado correctamente. Recibirás un correo de confirmación en breve.</p>
-        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8 text-left">
-          <p className="text-sm text-slate-500 mb-2">Número de orden: <span className="font-mono text-slate-900 font-bold">#{Math.floor(Math.random() * 100000)}</span></p>
-          <p className="text-sm text-slate-500">Fecha: <span className="font-medium text-slate-900">{new Date().toLocaleDateString()}</span></p>
+
+        <h2 className="text-3xl font-extrabold text-slate-900 mb-3">¡Pedido enviado!</h2>
+        <p className="text-slate-600 mb-2 text-lg">
+          Tu pedido fue enviado a WhatsApp de BenMarket.
+        </p>
+        <p className="text-slate-500 mb-8 text-sm">
+          Si no se abrió automáticamente, revisá que tu navegador no haya bloqueado la ventana emergente.
+        </p>
+
+        <div className="bg-[#25D366]/10 border border-[#25D366]/30 rounded-2xl p-5 mb-8 text-left">
+          <p className="text-sm font-semibold text-[#1a9e4e] mb-1">¿Qué sigue?</p>
+          <p className="text-sm text-slate-600">
+            Un representante de BenMarket se pondrá en contacto con vos por WhatsApp para confirmar tu pedido y coordinar la entrega.
+          </p>
         </div>
-        <Link to="/" className="btn-primary inline-flex items-center gap-2 px-8 py-3">
+
+        <Link
+          to="/"
+          className="btn-primary inline-flex items-center gap-2 px-8 py-3 text-base"
+        >
           <ArrowLeft className="w-5 h-5" /> Volver a la tienda
         </Link>
       </div>
@@ -56,125 +110,187 @@ export default function Checkout() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-8 pb-4 border-b">
-        <button onClick={() => navigate('/cart')} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8 pb-4 border-b border-slate-200">
+        <button
+          onClick={() => navigate('/cart')}
+          className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+          aria-label="Volver al carrito"
+        >
           <ArrowLeft className="w-6 h-6 text-slate-600" />
         </button>
-        <h1 className="text-3xl font-bold text-slate-900">Finalizar Compra</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Finalizar Pedido</h1>
+          <p className="text-sm text-slate-500">Completá tus datos y te contactaremos por WhatsApp</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        {/* Formulario */}
         <div>
-          <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <span className="bg-benmarket-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
-            Datos de envío
-          </h2>
-          <form id="checkout-form" onSubmit={handleSimulatePayment} className="space-y-5">
+          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-5">
+
+            {/* Datos personales */}
+            <div className="flex items-center gap-2 mb-1">
+              <User className="w-5 h-5 text-benmarket-600" />
+              <h2 className="text-lg font-bold text-slate-800">Datos personales</h2>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
-                <input required type="text" className="input-field" defaultValue="Juan" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nombre <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="text"
+                  name="nombre"
+                  className="input-field"
+                  placeholder="Ej: Juan"
+                  value={formData.nombre}
+                  onChange={handleChange}
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Apellido</label>
-                <input required type="text" className="input-field" defaultValue="Pérez" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Apellido <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="text"
+                  name="apellido"
+                  className="input-field"
+                  placeholder="Ej: Pérez"
+                  value={formData.apellido}
+                  onChange={handleChange}
+                />
               </div>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Dirección</label>
-              <input required type="text" className="input-field" defaultValue="Calle Falsa 123" />
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                <Phone className="w-3.5 h-3.5 inline mr-1 text-slate-500" />
+                Teléfono de contacto <span className="text-red-500">*</span>
+              </label>
+              <input
+                required
+                type="tel"
+                name="telefono"
+                className="input-field"
+                placeholder="Ej: 0981 123 456"
+                value={formData.telefono}
+                onChange={handleChange}
+              />
             </div>
+
+            {/* Dirección de envío */}
+            <div className="pt-2 flex items-center gap-2 mb-1">
+              <MapPin className="w-5 h-5 text-benmarket-600" />
+              <h2 className="text-lg font-bold text-slate-800">Dirección de entrega</h2>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Calle y número <span className="text-red-500">*</span></label>
+              <input
+                required
+                type="text"
+                name="direccion"
+                className="input-field"
+                placeholder="Ej: Av. Mcal. López 1234"
+                value={formData.direccion}
+                onChange={handleChange}
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
-                <input required type="text" className="input-field" defaultValue="Asunción" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Barrio</label>
+                <input
+                  type="text"
+                  name="barrio"
+                  className="input-field"
+                  placeholder="Ej: Villa Aurelia"
+                  value={formData.barrio}
+                  onChange={handleChange}
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Código Postal</label>
-                <input required type="text" className="input-field" defaultValue="1000" />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="text"
+                  name="ciudad"
+                  className="input-field"
+                  placeholder="Ej: Asunción"
+                  value={formData.ciudad}
+                  onChange={handleChange}
+                />
               </div>
             </div>
-            
-            <h2 className="text-xl font-bold text-slate-800 mb-6 mt-10 flex items-center gap-2">
-              <span className="bg-benmarket-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">2</span>
-              Método de pago
-            </h2>
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <div className="flex items-center gap-3 mb-4">
-                <input type="radio" id="card" name="payment" defaultChecked className="w-4 h-4 text-benmarket-600 focus:ring-benmarket-500" />
-                <label htmlFor="card" className="font-medium text-slate-700">Tarjeta de Crédito / Débito (Simulado)</label>
-              </div>
-              <div className="space-y-4 pl-7">
-                <div>
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Número de tarjeta</label>
-                  <input type="text" className="input-field" placeholder="**** **** **** ****" defaultValue="4000 1234 5678 9010" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Vencimiento</label>
-                    <input type="text" className="input-field" placeholder="MM/YY" defaultValue="12/25" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">CVC</label>
-                    <input type="text" className="input-field" placeholder="***" defaultValue="123" />
-                  </div>
-                </div>
-              </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nota / Referencia adicional</label>
+              <textarea
+                name="nota"
+                className="input-field resize-none h-20"
+                placeholder="Ej: Dejar en portería, llamar al llegar..."
+                value={formData.nota}
+                onChange={handleChange}
+              />
             </div>
           </form>
         </div>
 
+        {/* Resumen del pedido */}
         <div>
-          <div className="card p-6 sticky top-24 bg-slate-50">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">Resumen de tu pedido</h3>
-            <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
+          <div className="card p-6 sticky top-24 bg-slate-50 border-benmarket-100">
+            <div className="flex items-center gap-2 mb-4">
+              <ShoppingBag className="w-5 h-5 text-benmarket-600" />
+              <h3 className="text-lg font-bold text-slate-900">Tu pedido</h3>
+            </div>
+
+            <div className="space-y-3 mb-5 max-h-60 overflow-y-auto pr-1">
               {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-center text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className="bg-slate-200 text-slate-700 w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">{item.quantity}</span>
-                    <span className="font-medium text-slate-700 line-clamp-1 max-w-[150px]">{item.name}</span>
+                <div key={item.id} className="flex items-center justify-between text-sm gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-800 line-clamp-1">{item.name}</p>
+                      <p className="text-slate-500 text-xs">{item.quantity} unid. × {formatCurrency(item.price)}</p>
+                    </div>
                   </div>
-                  <span className="font-bold text-slate-900">{formatCurrency(item.price * item.quantity)}</span>
+                  <span className="font-bold text-slate-900 shrink-0">{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            
+
             <div className="border-t border-slate-200 pt-4 mb-6 space-y-2">
-              <div className="flex justify-between text-slate-600">
-                <span>Subtotal</span>
+              <div className="flex justify-between text-slate-600 text-sm">
+                <span>Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} artículos)</span>
                 <span>{formatCurrency(total)}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Envío</span>
-                <span className="text-green-600 font-medium">Gratis</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600">Envío</span>
+                <span className="text-green-600 font-medium">A coordinar</span>
               </div>
-              <div className="flex flex-col pt-4 mt-2 border-t border-slate-200">
-                <span className="text-lg font-bold text-slate-900">Total</span>
-                <span className="text-3xl font-black text-benmarket-600 text-right mt-1">{formatCurrency(total)}</span>
+              <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
+                <span className="font-bold text-slate-900">Total</span>
+                <span className="text-2xl font-black text-benmarket-600">{formatCurrency(total)}</span>
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               form="checkout-form"
-              disabled={loading}
-              className="btn-primary w-full py-4 text-lg flex justify-center items-center gap-2"
+              className="w-full py-4 rounded-xl text-white font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Procesando...
-                </span>
-              ) : (
-                'Confirmar y Pagar'
-              )}
+              <MessageCircle className="w-6 h-6" />
+              Enviar pedido por WhatsApp
             </button>
-            <p className="text-xs text-center text-slate-500 mt-4 flex items-center justify-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-              Pago seguro encriptado
+
+            <p className="text-xs text-center text-slate-500 mt-3">
+              Se abrirá WhatsApp con tu pedido listo para enviar a BenMarket
             </p>
           </div>
         </div>

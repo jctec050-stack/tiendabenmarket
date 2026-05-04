@@ -1,6 +1,6 @@
 import { useCart } from '../context/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, ArrowRight, Minus, Plus } from 'lucide-react';
+import { Trash2, Minus, Plus, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 
@@ -109,11 +109,13 @@ export default function Cart() {
               </div>
               <p className="text-xs text-slate-500 mt-2 text-right">Impuestos incluidos</p>
             </div>
-            <button 
+            <button
               onClick={handleCheckout}
-              className="btn-primary w-full flex justify-center items-center gap-2 py-4 text-lg font-bold shadow-lg shadow-benmarket-200"
+              className="w-full flex justify-center items-center gap-3 py-4 rounded-xl text-white text-lg font-bold shadow-lg transition-all active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
             >
-              Proceder al pago <ArrowRight className="w-5 h-5" />
+              <MessageCircle className="w-5 h-5" />
+              Continuar con el pedido
             </button>
             <div className="mt-4 text-center">
               <Link to="/" className="text-sm font-medium text-slate-500 hover:text-benmarket-600 hover:underline">
