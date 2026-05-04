@@ -16,22 +16,6 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch Products with category names
-      const { data: prodData, error: prodError } = await supabase.from('productos').select('*, categorias(nombre)');
-      if (prodError) {
-        console.error('Error fetching products:', prodError);
-      } else {
-        const mappedProducts = (prodData || []).map(p => ({
-          id: p.codigo_producto,
-          name: p.nombre,
-          price: p.precio,
-          stock: p.cantidad_disponible,
-          image: p.foto_url || 'https://placehold.co/400x400/f8fafc/94a3b8?text=Sin+Imagen',
-          category: p.categorias?.nombre || p.codigo_categoria || 'Sin Categoría'
-        }));
-        setProducts(mappedProducts);
-      }
-
       // Fetch Categories
       const { data: catData, error: catError } = await supabase.from('categorias').select('*');
       if (catError) {
@@ -41,6 +25,45 @@ export const AppProvider = ({ children }) => {
         const mappedCategories = (catData || []).map(c => c.nombre);
         setCategories(mappedCategories);
       }
+
+      // Fetch Products with category names (Paginated to bypass 1000 limit)
+      let allProducts = [];
+      let keepFetching = true;
+      let start = 0;
+      const limit = 1000;
+
+      while (keepFetching) {
+        const { data: prodData, error: prodError } = await supabase
+          .from('productos')
+          .select('*, categorias(nombre)')
+          .range(start, start + limit - 1);
+
+        if (prodError) {
+          console.error('Error fetching products:', prodError);
+          break;
+        }
+
+        if (prodData) {
+          allProducts = [...allProducts, ...prodData];
+          if (prodData.length < limit) {
+            keepFetching = false;
+          } else {
+            start += limit;
+          }
+        } else {
+          keepFetching = false;
+        }
+      }
+
+      const mappedProducts = allProducts.map(p => ({
+        id: p.codigo_producto,
+        name: p.nombre,
+        price: p.precio,
+        stock: p.cantidad_disponible,
+        image: p.foto_url || 'https://placehold.co/400x400/f8fafc/94a3b8?text=Sin+Imagen',
+        category: p.categorias?.nombre || p.codigo_categoria || 'Sin Categoría'
+      }));
+      setProducts(mappedProducts);
     };
     fetchData();
   }, []);
