@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User } from 'lucide-react';
+import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User, Link2 } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
@@ -20,6 +20,7 @@ export default function Checkout() {
     direccion: '',
     barrio: '',
     ciudad: 'Asunción',
+    google_maps: '',
     nota: '',
   });
 
@@ -41,6 +42,7 @@ export default function Checkout() {
       `👤 *Cliente:* ${clientName}`,
       `📞 *Teléfono:* ${formData.telefono}`,
       `📍 *Dirección:* ${address}`,
+      formData.google_maps ? `🗺️ *Ubicación:* ${formData.google_maps}` : null,
       formData.nota ? `📝 *Nota:* ${formData.nota}` : null,
       '',
       '🧾 *Detalle del pedido:*',
@@ -222,6 +224,22 @@ export default function Checkout() {
                   onChange={handleChange}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                <Link2 className="w-3.5 h-3.5 inline mr-1 text-slate-500" />
+                Link de Google Maps <span className="text-slate-400 font-normal text-xs">(opcional, para mayor precisión)</span>
+              </label>
+              <input
+                type="url"
+                name="google_maps"
+                className="input-field"
+                placeholder="Ej: https://maps.app.goo.gl/..."
+                value={formData.google_maps}
+                onChange={handleChange}
+              />
+              <p className="text-xs text-slate-400 mt-1">Abrí Google Maps, buscá tu ubicación, presioná "Compartir" y pegá el link aquí.</p>
             </div>
 
             <div>
