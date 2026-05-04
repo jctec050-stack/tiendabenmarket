@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { formatCurrency } from '../utils/currency';
-import { Bike, Check, Loader2 } from 'lucide-react';
+import { MapPin, CheckCircle } from 'lucide-react';
 
 export default function DeliveryConfig() {
   const { deliveryPrice, updateDeliveryPrice } = useAppContext();
@@ -35,14 +35,14 @@ export default function DeliveryConfig() {
         {/* Ícono + Info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="p-3 bg-primary/10 rounded-xl text-primary shrink-0">
-            <Bike className="w-6 h-6" />
+            <MapPin className="w-6 h-6" />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-bold text-on-surface">Precio de Delivery — Ciudad del Este</p>
             <p className="text-xs text-on-surface-variant mt-0.5">
               Precio actual:{' '}
               <span className="font-black text-primary text-sm">
-                {formatCurrency(deliveryPrice)}
+                {deliveryPrice !== undefined ? formatCurrency(deliveryPrice) : 'Cargando...'}
               </span>
             </p>
           </div>
@@ -73,9 +73,9 @@ export default function DeliveryConfig() {
             }`}
           >
             {status === 'loading' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              'Guardando...'
             ) : status === 'success' ? (
-              <><Check className="w-4 h-4" /> Guardado</>
+              <><CheckCircle className="w-4 h-4" /> Guardado</>
             ) : status === 'error' ? (
               'Error'
             ) : (
