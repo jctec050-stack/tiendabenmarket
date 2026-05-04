@@ -83,11 +83,7 @@ export default function ProductDetails() {
             <span className="text-lg text-slate-400 font-medium line-through">{formatCurrency(product.price * 1.2)}</span>
           </div>
 
-          <div className="mb-8">
-            <p className="text-slate-600 leading-relaxed mb-4">
-              Este excelente producto pertenece a la categoría de {product.category}. Adquiérelo ahora y disfruta de la mejor calidad al mejor precio garantizado por BenMarket.
-            </p>
-          </div>
+
 
           {/* Estado del stock */}
           <div className="mb-8">
