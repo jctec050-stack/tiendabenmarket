@@ -170,7 +170,7 @@ export default function ProductDetails() {
 
       {/* Sticky Buy Bar for Mobile */}
       {showStickyBar && product.stock > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] p-3.5 flex items-center justify-between gap-4 md:hidden animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] p-3.5 flex items-center justify-between gap-4 md:hidden animate-in slide-in-from-bottom duration-300 will-change-transform">
           <div className="flex items-center gap-2.5 min-w-0">
             <img 
               src={product.image} 

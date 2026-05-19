@@ -48,8 +48,10 @@ export default function BottomNavigation() {
 
   return (
     <>
-      {/* Bottom Nav Bar Container */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-lg border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden flex justify-around items-center h-16 px-2 safe-bottom">
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden flex justify-around items-center h-16 px-2 safe-bottom"
+        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
+      >
         {/* Inicio */}
         <Link 
           to="/" 
