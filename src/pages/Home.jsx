@@ -24,7 +24,7 @@ const getCategoryIcon = (cat) => {
 };
 
 export default function Home() {
-  const { products, categories, globalSearchQuery, setGlobalSearchQuery } = useAppContext();
+  const { products, categories, globalSearchQuery, setGlobalSearchQuery, banners } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('Productos Recomendados');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,34 +36,17 @@ export default function Home() {
     setCurrentPage(1);
   }, [selectedCategory, globalSearchQuery]);
 
-  const slides = [
-    {
-      id: 1,
-      image: tiendaImg,
-      badge: "ABIERTO LAS 24HS",
-      title: "Tu market más completo",
-      highlight: "a un clic de distancia.",
-      desc: "Productos locales y de primera calidad, seleccionados cuidadosamente para tu día a día."
-    },
-    {
-      id: 2,
-      image: bannerImg,
-      badge: "NUEVAS OFERTAS",
-      title: "Descubre los mejores",
-      highlight: "precios cada semana.",
-      desc: "Aprovecha nuestros descuentos especiales en la sección de despensa y frescos."
-    }
-  ];
+  const activeBanners = banners.filter(b => b.active);
 
   // Auto-play del slider
   useEffect(() => {
-    if (!globalSearchQuery) {
+    if (!globalSearchQuery && activeBanners.length > 0) {
       const timer = setInterval(() => {
-        setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+        setCurrentSlide((prev) => (prev === activeBanners.length - 1 ? 0 : prev + 1));
       }, 5000); // Cambia cada 5 segundos
       return () => clearInterval(timer);
     }
-  }, [globalSearchQuery, slides.length]);
+  }, [globalSearchQuery, activeBanners.length]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -100,60 +83,47 @@ export default function Home() {
   return (
     <div className="w-full bg-surface">
       {/* Hero Section / Banner Slider */}
-      <section className="mb-12 sm:mb-20 pt-0 relative">
-        <div className="relative h-[380px] sm:h-[500px] md:h-[600px] w-full mx-auto overflow-hidden bg-surface-container-lowest shadow-sm">
-          {/* Slider Container */}
-          <div 
-            className="flex w-full h-full transition-transform duration-1000 ease-in-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {slides.map((slide, index) => (
-              <div key={slide.id} className="w-full h-full shrink-0 relative">
-                <img 
-                  src={slide.image}
-                  alt={`Banner ${index + 1}`} 
-                  className="absolute inset-0 w-full h-full object-cover object-top"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/20"></div>
-                
-                <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-12 md:px-24 max-w-7xl mx-auto">
-                  <div className="inline-flex items-center gap-2 bg-tertiary/90 backdrop-blur-sm text-on-tertiary text-[10px] sm:text-xs font-bold px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full w-fit mb-4 sm:mb-6 shadow-sm border border-tertiary-container/30">
-                    <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-white"></span>
-                    </span>
-                    {slide.badge}
-                  </div>
-                  
-                  <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white leading-tight mb-3 sm:mb-6 tracking-tight font-headline transition-all duration-700 delay-300 opacity-100 translate-y-0">
-                    {slide.title} <br />
-                    <span className="text-primary-container">{slide.highlight}</span>
-                  </h1>
-                  <p className="text-surface-variant font-medium text-base sm:text-xl mb-6 sm:mb-8 max-w-lg leading-relaxed transition-all duration-700 delay-500 opacity-100 translate-y-0">
-                    {slide.desc}
-                  </p>
+      {activeBanners.length > 0 && (
+        <section className="mb-12 sm:mb-20 pt-0 relative">
+          <div className="relative h-[380px] sm:h-[500px] md:h-[600px] w-full mx-auto overflow-hidden bg-surface-container-lowest shadow-sm">
+            {/* Slider Container */}
+            <div 
+              className="flex w-full h-full transition-transform duration-1000 ease-in-out"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {activeBanners.map((banner, index) => (
+                <div key={banner.id} className="w-full h-full shrink-0 relative">
+                  <img 
+                    src={banner.image}
+                    alt={banner.name || `Banner ${index + 1}`} 
+                    className="absolute inset-0 w-full h-full object-cover object-top"
+                  />
+                  {/* Overlay oscuro opcional para que se vean mejor los indicadores, pero sin texto */}
+                  <div className="absolute inset-0 bg-black/10"></div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Dots Indicators */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`transition-all duration-300 rounded-full ${
-                  currentSlide === index 
-                    ? 'w-8 h-2.5 bg-primary shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
-                    : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
-                }`}
-                aria-label={`Ir a la diapositiva ${index + 1}`}
-              />
-            ))}
+            {/* Dots Indicators */}
+            {activeBanners.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                {activeBanners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`transition-all duration-300 rounded-full ${
+                      currentSlide === index 
+                        ? 'w-8 h-2.5 bg-primary shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
+                        : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
+                    }`}
+                    aria-label={`Ir a la diapositiva ${index + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Categories Scroller */}
       {!globalSearchQuery && (

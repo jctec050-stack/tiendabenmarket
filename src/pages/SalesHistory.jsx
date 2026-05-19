@@ -1,7 +1,6 @@
 import { useAppContext } from '../context/AppContext';
-import { FileText, Package } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
-import DeliveryConfig from '../components/DeliveryConfig';
 
 export default function SalesHistory() {
   const { sales } = useAppContext();
@@ -12,8 +11,6 @@ export default function SalesHistory() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-900 mb-6">Historial de Pedidos Web</h1>
-      
-      <DeliveryConfig />
       
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">

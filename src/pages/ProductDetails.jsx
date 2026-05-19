@@ -80,7 +80,6 @@ export default function ProductDetails() {
           
           <div className="flex items-center gap-4 mb-6">
             <span className="text-4xl font-black text-slate-900">{formatCurrency(product.price)}</span>
-            <span className="text-lg text-slate-400 font-medium line-through">{formatCurrency(product.price * 1.2)}</span>
           </div>
 
 

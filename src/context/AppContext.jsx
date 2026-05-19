@@ -11,12 +11,34 @@ export const AppProvider = ({ children }) => {
   const [users, setUsers] = useState(mockUsers);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [deliveryPrice, setDeliveryPrice] = useState(0);
+  const [themeColor, setThemeColor] = useState(null);
 
   const [categories, setCategories] = useState([]);
   const [rawCategories, setRawCategories] = useState([]);
+  const [banners, setBanners] = useState([
+    { id: 1, name: 'Banner Principal Web', image: '/src/images/tienda.jpg', active: true },
+    { id: 2, name: 'Promo Fin de Semana', image: '/src/images/banner.png', active: true },
+  ]);
 
   useEffect(() => {
     const fetchData = async () => {
+      // Fetch Theme Colors
+      const { data: themeData, error: themeError } = await supabase
+        .from('configuracion')
+        .select('valor')
+        .eq('clave', 'theme_colors')
+        .single();
+      
+      if (!themeError && themeData && themeData.valor) {
+        try {
+          const colors = JSON.parse(themeData.valor);
+          setThemeColor(colors);
+          applyThemeToDocument(colors);
+        } catch(e) {
+          console.error("Error parsing theme colors", e);
+        }
+      }
+
       // Fetch delivery price from configuracion table
       const { data: configData, error: configError } = await supabase
         .from('configuracion')
@@ -156,6 +178,31 @@ export const AppProvider = ({ children }) => {
   const updateUser = (id, updated) => setUsers(users.map(u => u.id === id ? { ...u, ...updated } : u));
   const deleteUser = (id) => setUsers(users.filter(u => u.id !== id));
 
+  // Funciones de Theme
+  const applyThemeToDocument = (colors) => {
+    const root = document.documentElement;
+    if (colors.primary) root.style.setProperty('--color-primary', colors.primary);
+    if (colors.primaryContainer) root.style.setProperty('--color-primary-container', colors.primaryContainer);
+    if (colors.secondary) root.style.setProperty('--color-secondary', colors.secondary);
+  };
+
+  const updateThemeColor = async (newColors) => {
+    const { error } = await supabase
+      .from('configuracion')
+      .upsert({ clave: 'theme_colors', valor: JSON.stringify(newColors), updated_at: new Date().toISOString() }, { onConflict: 'clave' });
+    if (error) {
+      console.error('Error saving theme colors:', error);
+      throw error;
+    }
+    setThemeColor(newColors);
+    applyThemeToDocument(newColors);
+  };
+
+  // Funciones de Banners
+  const addBanner = (banner) => setBanners([...banners, { ...banner, id: Date.now() }]);
+  const updateBannerStatus = (id) => setBanners(banners.map(b => b.id === id ? { ...b, active: !b.active } : b));
+  const deleteBanner = (id) => setBanners(banners.filter(b => b.id !== id));
+
   return (
     <AppContext.Provider value={{
       products, addProduct, updateProduct, deleteProduct,
@@ -163,6 +210,8 @@ export const AppProvider = ({ children }) => {
       sales, addSale,
       arqueos, addArqueo, updateArqueoStatus,
       users, addUser, updateUser, deleteUser,
+      themeColor, updateThemeColor,
+      banners, addBanner, updateBannerStatus, deleteBanner,
       globalSearchQuery, setGlobalSearchQuery,
       deliveryPrice, updateDeliveryPrice,
     }}>

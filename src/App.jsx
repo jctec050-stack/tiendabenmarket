@@ -23,10 +23,12 @@ import Contact from './pages/Contact';
 import AdminDashboard from './pages/AdminDashboard';
 import UsersManager from './pages/UsersManager';
 import ProductsManager from './pages/ProductsManager';
+import ThemeManager from './pages/ThemeManager';
 
 // Cajero Pages
 import SalesHistory from './pages/SalesHistory';
-import Arqueo from './pages/Arqueo';
+import DeliveryManager from './pages/DeliveryManager';
+import BannersManager from './pages/BannersManager';
 
 // Tesoreria Pages
 import TesoreriaDashboard from './pages/TesoreriaDashboard';
@@ -51,8 +53,11 @@ const DashboardRouter = () => {
       return (
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
+          <Route path="/theme" element={<ThemeManager />} />
+          <Route path="/delivery" element={<DeliveryManager />} />
           <Route path="/users" element={<UsersManager />} />
           <Route path="/products" element={<ProductsManager />} />
+          <Route path="/banners" element={<BannersManager />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       );
@@ -60,8 +65,9 @@ const DashboardRouter = () => {
       return (
         <Routes>
           <Route path="/" element={<SalesHistory />} />
-          <Route path="/arqueo" element={<Arqueo />} />
+          <Route path="/delivery" element={<DeliveryManager />} />
           <Route path="/products" element={<ProductsManager />} />
+          <Route path="/banners" element={<BannersManager />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       );

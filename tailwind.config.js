@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#b9080c",
+        "primary": "var(--color-primary)",
         "on-primary": "#ffffff",
-        "primary-container": "#d0090e",
+        "primary-container": "var(--color-primary-container)",
         "on-primary-container": "#ffffff",
-        "secondary": "#a83544",
+        "secondary": "var(--color-secondary)",
         "on-secondary": "#ffffff",
         "secondary-container": "#fd7681",
         "on-secondary-container": "#710920",

@@ -55,9 +55,6 @@ export default function ProductCard({ product }) {
         
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-outline-variant/20">
           <div className="flex flex-col">
-            <span className="text-[10px] sm:text-xs text-on-surface-variant/70 font-medium line-through decoration-outline-variant/50 hidden sm:block">
-              {formatCurrency(product.price * 1.2)}
-            </span>
             <span className="text-base sm:text-xl font-black text-on-surface tracking-tight">{formatCurrency(product.price)}</span>
           </div>
           <button 
