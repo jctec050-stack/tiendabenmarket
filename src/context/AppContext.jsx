@@ -1,6 +1,8 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { sales as mockSales, cashReconciliations as mockArqueos } from '../data/mock';
 import { supabase } from '../supabaseClient';
+import tiendaImg from '../images/tienda.jpg';
+import bannerImg from '../images/banner.png';
 
 const AppContext = createContext();
 
@@ -18,8 +20,8 @@ export const AppProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [rawCategories, setRawCategories] = useState([]);
   const [banners, setBanners] = useState([
-    { id: 1, name: 'Banner Principal Web', image: '/src/images/tienda.jpg', active: true },
-    { id: 2, name: 'Promo Fin de Semana', image: '/src/images/banner.png', active: true },
+    { id: 1, name: 'Banner Principal Web', image: tiendaImg, active: true },
+    { id: 2, name: 'Promo Fin de Semana', image: bannerImg, active: true },
   ]);
 
   useEffect(() => {
