@@ -4,15 +4,20 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
 import { useState, useRef, useEffect } from 'react';
+import { formatCurrency } from '../utils/currency';
 
 export default function BottomNavigation() {
-  const { cart } = useCart();
+  const { cart, addToCart } = useCart();
   const { user } = useAuth();
-  const { globalSearchQuery, setGlobalSearchQuery } = useAppContext();
+  const { globalSearchQuery, setGlobalSearchQuery, products } = useAppContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef(null);
+
+  const filteredProducts = products ? products.filter(p => 
+    p.name.toLowerCase().includes(globalSearchQuery.toLowerCase())
+  ) : [];
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const isHome = location.pathname === '/';
@@ -148,13 +153,76 @@ export default function BottomNavigation() {
                 <p className="text-xs text-slate-400 mt-1 max-w-[240px] mx-auto">Escribe el nombre de un producto para comenzar a filtrar al instante.</p>
               </div>
             ) : (
-              <div className="text-center py-6">
-                <button
-                  onClick={handleSearchClose}
-                  className="bg-primary text-on-primary font-bold text-sm px-6 py-3 rounded-full shadow-lg shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2"
-                >
-                  Ver resultados
-                </button>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-xs text-slate-450 font-bold uppercase tracking-wider">Productos encontrados ({filteredProducts.length})</p>
+                  <button
+                    onClick={handleSearchClose}
+                    className="text-xs text-primary font-bold hover:underline"
+                  >
+                    Ver en pantalla completa
+                  </button>
+                </div>
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-8 text-slate-500 text-sm">
+                    Ningún producto coincide con "{globalSearchQuery}"
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {filteredProducts.map((p) => {
+                      const isInCart = cart.some(item => item.id === p.id);
+                      return (
+                        <div key={p.id} className="flex items-center gap-3 p-2.5 bg-white border border-slate-100 rounded-2xl shadow-sm">
+                          <div 
+                            onClick={() => {
+                              handleSearchClose();
+                              navigate(`/product/${p.id}`);
+                            }}
+                            className="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-50 flex items-center justify-center p-0.5 cursor-pointer"
+                          >
+                            <img src={p.image} alt={p.name} className="w-full h-full object-contain mix-blend-multiply" />
+                          </div>
+                          
+                          <div 
+                            onClick={() => {
+                              handleSearchClose();
+                              navigate(`/product/${p.id}`);
+                            }}
+                            className="flex-grow min-w-0 cursor-pointer"
+                          >
+                            <p className="text-[9px] text-primary font-bold uppercase tracking-wider">{p.category}</p>
+                            <h4 className="font-bold text-xs text-slate-800 line-clamp-1 leading-tight">{p.name}</h4>
+                            <p className="font-extrabold text-sm text-primary tracking-tight mt-0.5">{formatCurrency(p.price)}</p>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              if (p.stock > 0) {
+                                addToCart(p, 1);
+                              }
+                            }}
+                            disabled={p.stock === 0}
+                            className={`p-2 rounded-xl transition-all active:scale-95 shrink-0 ${
+                              p.stock === 0
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : isInCart
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
+                            }`}
+                          >
+                            {isInCart ? (
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : (
+                              <ShoppingCart className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
