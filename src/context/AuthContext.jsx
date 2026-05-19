@@ -61,41 +61,6 @@ export const AuthProvider = ({ children }) => {
       password
     });
 
-    // Auto-registro para cuentas de prueba por defecto si no existen
-    if (error && error.message.includes('Invalid login credentials')) {
-      const defaultUsers = {
-        'cliente@benmarket.com': { name: 'Juan Cliente', role: 'Cliente', avatar: 'https://i.pravatar.cc/150?img=11' },
-        'cajero@benmarket.com': { name: 'María Cajera', role: 'Cajero', avatar: 'https://i.pravatar.cc/150?img=5' },
-        'tesoreria@benmarket.com': { name: 'Carlos Tesorero', role: 'Tesoreria', avatar: 'https://i.pravatar.cc/150?img=8' },
-        'admin@benmarket.com': { name: 'Ana Admin', role: 'Admin', avatar: 'https://i.pravatar.cc/150?img=9' },
-        'invitado@benmarket.com': { name: 'Pedro Invitado', role: 'Cliente', avatar: 'https://i.pravatar.cc/150?img=12' },
-      };
-
-      const defaultUser = defaultUsers[email.toLowerCase().trim()];
-      if (defaultUser) {
-        console.log(`Auto-registrando usuario de prueba: ${email}`);
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name: defaultUser.name,
-              avatar_url: defaultUser.avatar
-            }
-          }
-        });
-
-        if (!signUpError && signUpData.user) {
-          // Reintentar login
-          const retry = await supabase.auth.signInWithPassword({ email, password });
-          data = retry.data;
-          error = retry.error;
-        } else {
-          console.error("Error en auto-registro:", signUpError);
-        }
-      }
-    }
-
     if (error) {
       console.error('Error al iniciar sesión:', error.message);
       return false;

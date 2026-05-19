@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, useEffect } from 'react';
-import { sales as mockSales, cashReconciliations as mockArqueos, users as mockUsers } from '../data/mock';
+import { sales as mockSales, cashReconciliations as mockArqueos } from '../data/mock';
 import { supabase } from '../supabaseClient';
 
 const AppContext = createContext();
