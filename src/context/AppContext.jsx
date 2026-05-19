@@ -22,6 +22,23 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Fetch Banners
+      const { data: bannerData, error: bannerError } = await supabase
+        .from('banners')
+        .select('*')
+        .order('id', { ascending: true });
+      
+      if (bannerError) {
+        console.error('Error fetching banners:', bannerError);
+      } else if (bannerData && bannerData.length > 0) {
+        setBanners(bannerData.map(b => ({
+          id: b.id,
+          name: b.name,
+          image: b.image,
+          active: b.active
+        })));
+      }
+
       // Fetch Theme Colors
       const { data: themeData, error: themeError } = await supabase
         .from('configuracion')
@@ -199,9 +216,53 @@ export const AppProvider = ({ children }) => {
   };
 
   // Funciones de Banners
-  const addBanner = (banner) => setBanners([...banners, { ...banner, id: Date.now() }]);
-  const updateBannerStatus = (id) => setBanners(banners.map(b => b.id === id ? { ...b, active: !b.active } : b));
-  const deleteBanner = (id) => setBanners(banners.filter(b => b.id !== id));
+  const addBanner = async (banner) => {
+    const dbBanner = {
+      name: banner.name,
+      image: banner.image,
+      active: banner.active
+    };
+    const { data, error } = await supabase.from('banners').insert([dbBanner]).select();
+    if (error) {
+      console.error('Error adding banner:', error);
+      throw error;
+    } else if (data && data[0]) {
+      setBanners([...banners, {
+        id: data[0].id,
+        name: data[0].name,
+        image: data[0].image,
+        active: data[0].active
+      }]);
+    }
+  };
+
+  const updateBannerStatus = async (id) => {
+    const banner = banners.find(b => b.id === id);
+    if (!banner) return;
+    const nextActive = !banner.active;
+
+    const { error } = await supabase
+      .from('banners')
+      .update({ active: nextActive })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating banner status:', error);
+      throw error;
+    } else {
+      setBanners(banners.map(b => b.id === id ? { ...b, active: nextActive } : b));
+    }
+  };
+
+  const deleteBanner = async (id) => {
+    const { error } = await supabase.from('banners').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting banner:', error);
+      throw error;
+    } else {
+      setBanners(banners.filter(b => b.id !== id));
+    }
+  };
 
   return (
     <AppContext.Provider value={{

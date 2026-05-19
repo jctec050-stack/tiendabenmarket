@@ -1,26 +1,82 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, Image as ImageIcon, CheckCircle, XCircle, Info } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Plus, Trash2, Image as ImageIcon, CheckCircle, XCircle, Info, Upload, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { supabase } from '../supabaseClient';
+import { compressImage } from '../utils/imageCompression';
 
 export default function BannersManager() {
   const { banners, addBanner, updateBannerStatus, deleteBanner } = useAppContext();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
   const [formData, setFormData] = useState({ name: '', image: '', active: true });
+  const fileInputRef = useRef(null);
 
   const handleOpenModal = () => {
+    setImageFile(null);
     setFormData({ name: '', image: '', active: true });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addBanner(formData);
-    setIsModalOpen(false);
+    setIsUploading(true);
+    try {
+      let finalImageUrl = formData.image;
+
+      if (imageFile) {
+        const compressed = await compressImage(imageFile);
+        const fileExt = compressed.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('banners')
+          .upload(fileName, compressed);
+          
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('banners')
+          .getPublicUrl(fileName);
+          
+        finalImageUrl = publicUrlData.publicUrl;
+      } else if (!formData.image) {
+        alert('Por favor selecciona o introduce una imagen para el banner.');
+        setIsUploading(false);
+        return;
+      }
+
+      await addBanner({
+        name: formData.name,
+        image: finalImageUrl,
+        active: formData.active
+      });
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error guardando banner:', error);
+      alert(`Error al guardar banner: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const toggleStatus = (id) => {
-    updateBannerStatus(id);
+  const toggleStatus = async (id) => {
+    try {
+      await updateBannerStatus(id);
+    } catch (err) {
+      alert('Error al actualizar el estado del banner: ' + err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este banner?')) {
+      try {
+        await deleteBanner(id);
+      } catch (err) {
+        alert('Error al eliminar el banner: ' + err.message);
+      }
+    }
   };
 
   return (
@@ -59,7 +115,7 @@ export default function BannersManager() {
                 <img src={banner.image} alt={banner.name} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <button 
-                    onClick={() => deleteBanner(banner.id)}
+                    onClick={() => handleDelete(banner.id)}
                     className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
                     title="Eliminar"
                   >
@@ -119,15 +175,62 @@ export default function BannersManager() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL de la Imagen (1920x800px recomendado)</label>
-                <input 
-                  required 
-                  type="url" 
-                  className="input-field" 
-                  placeholder="https://..."
-                  value={formData.image} 
-                  onChange={e => setFormData({...formData, image: e.target.value})} 
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Imagen del Banner (1920x800px recomendado)</label>
+                <div className="flex flex-col gap-3">
+                  <div className="w-full h-32 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center relative hover:bg-slate-100 transition-colors">
+                    {formData.image ? (
+                      <>
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setImageFile(null);
+                            setFormData({ ...formData, image: '' });
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <div 
+                        onClick={() => fileInputRef.current?.click()} 
+                        className="flex flex-col items-center gap-2 cursor-pointer p-4 text-center w-full"
+                      >
+                        <Upload className="w-8 h-8 text-slate-400" />
+                        <span className="text-xs text-slate-500 font-semibold">Haz clic para subir una imagen</span>
+                        <span className="text-[10px] text-slate-400">Resolución recomendada: 1920x800</span>
+                      </div>
+                    )}
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        setImageFile(file);
+                        setFormData({ ...formData, image: URL.createObjectURL(file) });
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <div className="text-center text-xs text-slate-400">- O -</div>
+                  <div>
+                    <input 
+                      type="url" 
+                      className="input-field" 
+                      placeholder="Pega la URL de la imagen si ya está subida"
+                      value={formData.image && !imageFile ? formData.image : ''} 
+                      onChange={e => {
+                        setImageFile(null);
+                        setFormData({...formData, image: e.target.value});
+                      }} 
+                    />
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-2 pt-2">
                 <input 
@@ -142,8 +245,10 @@ export default function BannersManager() {
                 </label>
               </div>
               <div className="pt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancelar</button>
-                <button type="submit" className="btn-primary">Guardar</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary" disabled={isUploading}>Cancelar</button>
+                <button type="submit" className="btn-primary" disabled={isUploading}>
+                  {isUploading ? 'Guardando...' : 'Guardar'}
+                </button>
               </div>
             </form>
           </div>

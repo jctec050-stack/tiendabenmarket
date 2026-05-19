@@ -27,6 +27,7 @@ export default function Home() {
   const { products, categories, globalSearchQuery, setGlobalSearchQuery, banners } = useAppContext();
   const [selectedCategory, setSelectedCategory] = useState('Productos Recomendados');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const gridRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -37,16 +38,29 @@ export default function Home() {
   }, [selectedCategory, globalSearchQuery]);
 
   const activeBanners = banners.filter(b => b.active);
+  const slides = activeBanners.length > 1 ? [...activeBanners, activeBanners[0]] : activeBanners;
 
   // Auto-play del slider
   useEffect(() => {
-    if (!globalSearchQuery && activeBanners.length > 0) {
+    if (!globalSearchQuery && activeBanners.length > 1) {
       const timer = setInterval(() => {
-        setCurrentSlide((prev) => (prev === activeBanners.length - 1 ? 0 : prev + 1));
+        setIsTransitioning(true);
+        setCurrentSlide((prev) => prev + 1);
       }, 5000); // Cambia cada 5 segundos
       return () => clearInterval(timer);
     }
   }, [globalSearchQuery, activeBanners.length]);
+
+  // Resetear al primer slide sin animación cuando llegamos al slide duplicado
+  useEffect(() => {
+    if (currentSlide === activeBanners.length && activeBanners.length > 1) {
+      const jumpTimer = setTimeout(() => {
+        setIsTransitioning(false);
+        setCurrentSlide(0);
+      }, 1000); // Duración de la transición (1s)
+      return () => clearTimeout(jumpTimer);
+    }
+  }, [currentSlide, activeBanners.length]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -88,11 +102,11 @@ export default function Home() {
           <div className="relative h-[380px] sm:h-[500px] md:h-[600px] w-full mx-auto overflow-hidden bg-surface-container-lowest shadow-sm">
             {/* Slider Container */}
             <div 
-              className="flex w-full h-full transition-transform duration-1000 ease-in-out"
+              className={`flex w-full h-full ${isTransitioning ? 'transition-transform duration-1000 ease-in-out' : 'transition-none'}`}
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
-              {activeBanners.map((banner, index) => (
-                <div key={banner.id} className="w-full h-full shrink-0 relative">
+              {slides.map((banner, index) => (
+                <div key={`${banner.id}-${index}`} className="w-full h-full shrink-0 relative">
                   <img 
                     src={banner.image}
                     alt={banner.name || `Banner ${index + 1}`} 
@@ -110,9 +124,12 @@ export default function Home() {
                 {activeBanners.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentSlide(index)}
+                    onClick={() => {
+                      setIsTransitioning(true);
+                      setCurrentSlide(index);
+                    }}
                     className={`transition-all duration-300 rounded-full ${
-                      currentSlide === index 
+                      (currentSlide % activeBanners.length) === index 
                         ? 'w-8 h-2.5 bg-primary shadow-[0_0_10px_rgba(239,68,68,0.6)]' 
                         : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
                     }`}

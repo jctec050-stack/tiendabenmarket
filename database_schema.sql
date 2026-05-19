@@ -124,3 +124,57 @@ CREATE POLICY "Configuracion escritura autenticados" ON public.configuracion
 INSERT INTO public.configuracion (clave, valor, descripcion)
 VALUES ('delivery_price', '0', 'Precio del delivery en guaraníes para Ciudad del Este')
 ON CONFLICT (clave) DO NOTHING;
+
+-- ==========================================
+-- TABLA DE BANNERS PUBLICITARIOS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS public.banners (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    image TEXT NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Habilitar Row Level Security (RLS)
+ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de acceso para Banners (Públicas para desarrollo)
+CREATE POLICY "Banners son modificables por todos" ON public.banners
+    FOR ALL USING (true) WITH CHECK (true);
+
+-- Trigger para updated_at
+CREATE TRIGGER set_updated_at_banners
+    BEFORE UPDATE ON public.banners
+    FOR EACH ROW
+    EXECUTE FUNCTION public.handle_updated_at();
+
+-- ==========================================
+-- POLÍTICAS DE STORAGE PARA BANNERS
+-- ==========================================
+
+-- 1. Crear el bucket 'banners' si no existe y hacerlo público
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('banners', 'banners', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- 2. Permitir que CUALQUIERA pueda ver y descargar las imágenes del bucket 'banners'
+CREATE POLICY "Imágenes de banners son públicas"
+  ON storage.objects FOR SELECT
+  USING ( bucket_id = 'banners' );
+
+-- 3. Permitir subir/insertar imágenes al bucket 'banners'
+CREATE POLICY "Permitir subir imágenes a banners"
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'banners' );
+
+-- 4. Permitir actualizar imágenes en el bucket 'banners'
+CREATE POLICY "Permitir actualizar imágenes en banners"
+  ON storage.objects FOR UPDATE
+  USING ( bucket_id = 'banners' );
+
+-- 5. Permitir borrar imágenes del bucket 'banners'
+CREATE POLICY "Permitir borrar imágenes en banners"
+  ON storage.objects FOR DELETE
+  USING ( bucket_id = 'banners' );
