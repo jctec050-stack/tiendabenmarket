@@ -20,10 +20,10 @@ export default function MainLayout() {
             />
             <p className="text-white/70 text-xs sm:text-sm leading-relaxed font-medium mb-4 max-w-[280px] sm:max-w-none">Av. Julio Cesar Riquelme, km 7 Barrio Ciudad Nueva, Ciudad del Este 7000</p>
             <div className="flex gap-5 sm:gap-4 justify-center sm:justify-start">
-              <a href="#" aria-label="Instagram" className="text-white/70 hover:text-primary hover:scale-110 transition-all p-2 sm:p-0">
+              <a href="https://www.instagram.com/benmarket24/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-white/70 hover:text-primary hover:scale-110 transition-all p-2 sm:p-0">
                 <Instagram className="w-6 h-6 sm:w-5 sm:h-5" />
               </a>
-              <a href="#" aria-label="Facebook" className="text-white/70 hover:text-primary hover:scale-110 transition-all p-2 sm:p-0">
+              <a href="https://www.facebook.com/benmarket24" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-white/70 hover:text-primary hover:scale-110 transition-all p-2 sm:p-0">
                 <Facebook className="w-6 h-6 sm:w-5 sm:h-5" />
               </a>
               <a href="#" aria-label="WhatsApp" className="text-white/70 hover:text-primary hover:scale-110 transition-all p-2 sm:p-0">
