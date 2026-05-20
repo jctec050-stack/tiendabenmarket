@@ -3,15 +3,18 @@ import { useCart } from '../context/CartContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppContext } from '../context/AppContext';
-import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User, Link2 } from 'lucide-react';
+import { CheckCircle, ArrowLeft, MessageCircle, ShoppingBag, MapPin, Phone, User, Link2, Truck, Store } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
 
 export default function Checkout() {
-  const { cart, total, clearCart } = useCart();
+  const { cart, total, clearCart, shippingMethod, setShippingMethod } = useCart();
   const { user } = useAuth();
   const { deliveryPrice, whatsappNumber, addPedido } = useAppContext();
+
+  const finalDeliveryPrice = shippingMethod === 'pickup' ? 0 : deliveryPrice;
+  const grandTotal = total + finalDeliveryPrice;
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,8 +36,12 @@ export default function Checkout() {
 
   const buildWhatsAppMessage = () => {
     const clientName = `${formData.nombre} ${formData.apellido}`.trim();
-    const address = [formData.direccion, formData.barrio, 'Ciudad del Este'].filter(Boolean).join(', ');
-    const grandTotal = total + deliveryPrice;
+    const isPickup = shippingMethod === 'pickup';
+    const address = isPickup 
+      ? '🏪 Retiro en Tienda' 
+      : [formData.direccion, formData.barrio, 'Ciudad del Este'].filter(Boolean).join(', ');
+    const finalDeliveryPrice = isPickup ? 0 : deliveryPrice;
+    const currentGrandTotal = total + finalDeliveryPrice;
 
     const itemLines = cart
       .map(item => {
@@ -51,16 +58,16 @@ export default function Checkout() {
       '',
       `👤 *Cliente:* ${clientName}`,
       `📞 *Teléfono:* ${formData.telefono}`,
-      `📍 *Dirección:* ${address}`,
-      formData.google_maps ? `🗺️ *Ubicación:* ${formData.google_maps}` : null,
+      isPickup ? `🏪 *Método:* Retiro en Tienda` : `📍 *Dirección:* ${address}`,
+      (!isPickup && formData.google_maps) ? `🗺️ *Ubicación:* ${formData.google_maps}` : null,
       formData.nota ? `📝 *Nota:* ${formData.nota}` : null,
       '',
       '🧾 *Detalle del pedido:*',
       itemLines,
       '',
       `🛋️ *Subtotal:* ${formatCurrency(total)}`,
-      `🚴 *Delivery (Cde):* ${formatCurrency(deliveryPrice)}`,
-      `💰 *TOTAL: ${formatCurrency(grandTotal)}*`,
+      isPickup ? `🏪 *Retiro en Tienda:* ${formatCurrency(0)}` : `🚴 *Delivery (Cde):* ${formatCurrency(deliveryPrice)}`,
+      `💰 *TOTAL: ${formatCurrency(currentGrandTotal)}*`,
       '',
       '_Pedido generado desde BenMarket Online_',
     ]
@@ -74,12 +81,14 @@ export default function Checkout() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const isPickup = shippingMethod === 'pickup';
+      const finalDeliveryPrice = isPickup ? 0 : deliveryPrice;
       const pedido = {
         cliente_nombre: `${formData.nombre} ${formData.apellido}`.trim(),
         cliente_telefono: formData.telefono,
-        cliente_direccion: formData.direccion,
-        cliente_barrio: formData.barrio || null,
-        cliente_google_maps: formData.google_maps || null,
+        cliente_direccion: isPickup ? 'Retiro en Tienda' : formData.direccion,
+        cliente_barrio: isPickup ? null : (formData.barrio || null),
+        cliente_google_maps: isPickup ? null : (formData.google_maps || null),
         cliente_nota: formData.nota || null,
         items: cart.map(item => ({
           id: item.id,
@@ -89,8 +98,8 @@ export default function Checkout() {
           image: item.image
         })),
         subtotal: total,
-        delivery: deliveryPrice,
-        total: total + deliveryPrice,
+        delivery: finalDeliveryPrice,
+        total: total + finalDeliveryPrice,
         estado: 'Pendiente',
         user_id: user?.id || null
       };
@@ -196,7 +205,7 @@ export default function Checkout() {
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="font-extrabold text-sm text-slate-900">{formatCurrency(total + deliveryPrice)}</span>
+            <span className="font-extrabold text-sm text-slate-900">{formatCurrency(grandTotal)}</span>
             <span className="text-xs text-slate-400 font-bold">{isSummaryExpanded ? 'Ocultar' : 'Mostrar'}</span>
           </div>
         </button>
@@ -226,7 +235,11 @@ export default function Checkout() {
               </div>
               <div className="flex justify-between">
                 <span>🚴 Delivery</span>
-                <span>{formatCurrency(deliveryPrice)}</span>
+                {shippingMethod === 'pickup' ? (
+                  <span className="text-emerald-600 font-bold">Gratis (Retiro)</span>
+                ) : (
+                  <span>{formatCurrency(deliveryPrice)}</span>
+                )}
               </div>
             </div>
           </div>
@@ -288,62 +301,83 @@ export default function Checkout() {
             </div>
 
             {/* Dirección de envío */}
-            <div className="pt-2 flex items-center gap-2 mb-1">
-              <MapPin className="w-5 h-5 text-benmarket-600" />
-              <h2 className="text-lg font-bold text-slate-800">Dirección de entrega</h2>
-            </div>
+            {shippingMethod === 'delivery' ? (
+              <>
+                <div className="pt-2 flex items-center gap-2 mb-1">
+                  <MapPin className="w-5 h-5 text-benmarket-600" />
+                  <h2 className="text-lg font-bold text-slate-800">Dirección de entrega</h2>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Calle y número <span className="text-red-500">*</span></label>
-              <input
-                required
-                type="text"
-                name="direccion"
-                className="input-field"
-                placeholder="Ej: Av. Mcal. López 1234"
-                value={formData.direccion}
-                onChange={handleChange}
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Calle y número <span className="text-red-500">*</span></label>
+                  <input
+                    required
+                    type="text"
+                    name="direccion"
+                    className="input-field"
+                    placeholder="Ej: Av. Mcal. López 1234"
+                    value={formData.direccion}
+                    onChange={handleChange}
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Barrio</label>
-                <input
-                  type="text"
-                  name="barrio"
-                  className="input-field"
-                  placeholder="Ej: Villa Aurelia"
-                  value={formData.barrio}
-                  onChange={handleChange}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Barrio</label>
+                    <input
+                      type="text"
+                      name="barrio"
+                      className="input-field"
+                      placeholder="Ej: Villa Aurelia"
+                      value={formData.barrio}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
+                    <input
+                      type="text"
+                      readOnly
+                      className="input-field bg-slate-100 text-slate-500 cursor-not-allowed"
+                      value="Ciudad del Este"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    <Link2 className="w-3.5 h-3.5 inline mr-1 text-slate-500" />
+                    Link de Google Maps <span className="text-slate-400 font-normal text-xs">(opcional, para mayor precisión)</span>
+                  </label>
+                  <input
+                    type="url"
+                    name="google_maps"
+                    className="input-field"
+                    placeholder="Ej: https://maps.app.goo.gl/..."
+                    value={formData.google_maps}
+                    onChange={handleChange}
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Abrí Google Maps, buscá tu ubicación, presioná "Compartir" y pegá el link aquí.</p>
+                </div>
+              </>
+            ) : (
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 mt-4 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 p-2.5 rounded-xl text-primary mt-0.5 shrink-0 animate-pulse">
+                    <Store className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Retiro en local BenMarket</h4>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Podés pasar a retirar tu pedido en nuestro local de Ciudad del Este.
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-semibold mt-1">
+                      Horario de atención: Lunes a Sábados de 08:00 a 18:00 hs.
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Ciudad</label>
-                <input
-                  type="text"
-                  readOnly
-                  className="input-field bg-slate-100 text-slate-500 cursor-not-allowed"
-                  value="Ciudad del Este"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                <Link2 className="w-3.5 h-3.5 inline mr-1 text-slate-500" />
-                Link de Google Maps <span className="text-slate-400 font-normal text-xs">(opcional, para mayor precisión)</span>
-              </label>
-              <input
-                type="url"
-                name="google_maps"
-                className="input-field"
-                placeholder="Ej: https://maps.app.goo.gl/..."
-                value={formData.google_maps}
-                onChange={handleChange}
-              />
-              <p className="text-xs text-slate-400 mt-1">Abrí Google Maps, buscá tu ubicación, presioná "Compartir" y pegá el link aquí.</p>
-            </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Nota / Referencia adicional</label>
@@ -364,6 +398,34 @@ export default function Checkout() {
             <div className="flex items-center gap-2 mb-4">
               <ShoppingBag className="w-5 h-5 text-benmarket-600" />
               <h3 className="text-lg font-bold text-slate-900">Tu pedido</h3>
+            </div>
+
+            {/* Selector de Método de Entrega */}
+            <div className="bg-slate-200/60 p-1 rounded-xl flex gap-1 mb-5">
+              <button
+                type="button"
+                onClick={() => setShippingMethod('delivery')}
+                className={`flex-grow flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+                  shippingMethod === 'delivery'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                <span>Delivery</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShippingMethod('pickup')}
+                className={`flex-grow flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+                  shippingMethod === 'pickup'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Store className="w-4 h-4" />
+                <span>Retiro en Tienda</span>
+              </button>
             </div>
 
             <div className="space-y-3 mb-5 max-h-60 overflow-y-auto pr-1">
@@ -392,11 +454,15 @@ export default function Checkout() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-600">🚴 Delivery (Ciudad del Este)</span>
-                <span className="font-semibold text-slate-800">{formatCurrency(deliveryPrice)}</span>
+                {shippingMethod === 'pickup' ? (
+                  <span className="text-emerald-600 font-bold">Gratis (Retiro)</span>
+                ) : (
+                  <span className="font-semibold text-slate-800">{formatCurrency(deliveryPrice)}</span>
+                )}
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-slate-200 mt-2">
                 <span className="font-bold text-slate-900">Total</span>
-                <span className="text-2xl font-black text-benmarket-600">{formatCurrency(total + deliveryPrice)}</span>
+                <span className="text-2xl font-black text-benmarket-600">{formatCurrency(grandTotal)}</span>
               </div>
             </div>
 
@@ -428,7 +494,7 @@ export default function Checkout() {
       >
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
-          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(total + deliveryPrice)}</span>
+          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(grandTotal)}</span>
         </div>
         <button
           type="submit"

@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import { formatCurrency } from '../utils/currency';
 import { 
   Package, Clock, Truck, Play, Check, ExternalLink, 
-  MessageCircle, Search, Bell, Volume2, VolumeX, Eye, X, MapPin
+  MessageCircle, Search, Bell, Volume2, VolumeX, Eye, X, MapPin, Store
 } from 'lucide-react';
 
 export default function SalesHistory() {
@@ -143,7 +143,10 @@ export default function SalesHistory() {
   };
 
   const sendCustomerWhatsAppNotification = (pedido) => {
-    const message = `¡Hola ${pedido.cliente_nombre}! Tu pedido de BenMarket ya está en camino. 🚴💨\n¡Muchas gracias por tu compra!`;
+    const isPickup = pedido.cliente_direccion === 'Retiro en Tienda';
+    const message = isPickup
+      ? `¡Hola ${pedido.cliente_nombre}! Tu pedido de BenMarket ya está listo para ser retirado. 🏪✨\n¡Te esperamos!`
+      : `¡Hola ${pedido.cliente_nombre}! Tu pedido de BenMarket ya está en camino. 🚴💨\n¡Muchas gracias por tu compra!`;
     const encoded = encodeURIComponent(message);
     const cleanPhone = formatPhoneForWhatsApp(pedido.cliente_telefono);
     const url = `https://wa.me/${cleanPhone}?text=${encoded}`;
@@ -350,7 +353,15 @@ export default function SalesHistory() {
                               onClick={() => handleStatusChange(pedido.id, 'Enviado', pedido)}
                               className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1 shadow-sm shadow-emerald-500/20 active:scale-95 transition-all"
                             >
-                              <Truck className="w-3.5 h-3.5" /> Enviar
+                              {pedido.cliente_direccion === 'Retiro en Tienda' ? (
+                                <>
+                                  <Store className="w-3.5 h-3.5" /> Listo
+                                </>
+                              ) : (
+                                <>
+                                  <Truck className="w-3.5 h-3.5" /> Enviar
+                                </>
+                              )}
                             </button>
                           )}
 
@@ -416,7 +427,11 @@ export default function SalesHistory() {
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Información de Entrega</span>
                     <p className="text-sm font-semibold text-slate-800 flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      {selectedPedido.cliente_direccion === 'Retiro en Tienda' ? (
+                        <Store className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      ) : (
+                        <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      )}
                       <span>
                         {selectedPedido.cliente_direccion}
                         {selectedPedido.cliente_barrio && <span className="block text-xs font-normal text-slate-500">Barrio: {selectedPedido.cliente_barrio}</span>}
@@ -472,8 +487,8 @@ export default function SalesHistory() {
                   <span>{formatCurrency(Number(selectedPedido.subtotal))}</span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
-                  <span>Costo de Delivery</span>
-                  <span>{formatCurrency(Number(selectedPedido.delivery))}</span>
+                  <span>{selectedPedido.cliente_direccion === 'Retiro en Tienda' ? 'Retiro en Tienda' : 'Costo de Delivery'}</span>
+                  <span>{selectedPedido.cliente_direccion === 'Retiro en Tienda' ? 'Gratis' : formatCurrency(Number(selectedPedido.delivery))}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-slate-950 pt-2 border-t border-slate-200">
                   <span>Total Pedido</span>
@@ -506,7 +521,15 @@ export default function SalesHistory() {
                   }}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-500/10 active:scale-95 transition-all"
                 >
-                  <Truck className="w-4 h-4" /> Despachar / Enviar pedido
+                  {selectedPedido.cliente_direccion === 'Retiro en Tienda' ? (
+                    <>
+                      <Store className="w-4 h-4" /> Marcar como Listo para Retiro
+                    </>
+                  ) : (
+                    <>
+                      <Truck className="w-4 h-4" /> Despachar / Enviar pedido
+                    </>
+                  )}
                 </button>
               )}
 

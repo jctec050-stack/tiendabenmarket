@@ -1,16 +1,18 @@
 import { useCart } from '../context/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Minus, Plus, MessageCircle } from 'lucide-react';
+import { Trash2, Minus, Plus, MessageCircle, ArrowRight, Truck, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 import { useAppContext } from '../context/AppContext';
-import { ArrowRight } from 'lucide-react';
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
+  const { cart, removeFromCart, updateQuantity, total, clearCart, shippingMethod, setShippingMethod } = useCart();
   const { user } = useAuth();
   const { deliveryPrice } = useAppContext();
   const navigate = useNavigate();
+
+  const finalDeliveryPrice = shippingMethod === 'pickup' ? 0 : deliveryPrice;
+  const grandTotal = total + finalDeliveryPrice;
 
   const handleCheckout = () => {
     if (!user) {
@@ -130,6 +132,35 @@ export default function Cart() {
         <div className="lg:col-span-1">
           <div className="card p-6 bg-slate-50 border-benmarket-100">
             <h3 className="text-xl font-bold text-slate-900 mb-6 pb-4 border-b border-slate-200">Resumen del pedido</h3>
+            
+            {/* Selector de Método de Entrega */}
+            <div className="bg-slate-200/60 p-1 rounded-xl flex gap-1 mb-6">
+              <button
+                type="button"
+                onClick={() => setShippingMethod('delivery')}
+                className={`flex-grow flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+                  shippingMethod === 'delivery'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Truck className="w-4 h-4" />
+                <span>Delivery</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShippingMethod('pickup')}
+                className={`flex-grow flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-bold transition-all ${
+                  shippingMethod === 'pickup'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Store className="w-4 h-4" />
+                <span>Retiro en Tienda</span>
+              </button>
+            </div>
+
             <div className="space-y-4 mb-6 text-slate-600 font-medium">
               <div className="flex justify-between">
                 <span>Subtotal ({cart.length} items)</span>
@@ -137,13 +168,17 @@ export default function Cart() {
               </div>
               <div className="flex justify-between text-slate-600">
                 <span>Envío (CDE)</span>
-                <span>{formatCurrency(deliveryPrice)}</span>
+                {shippingMethod === 'pickup' ? (
+                  <span className="text-emerald-600 font-bold">Gratis (Retiro)</span>
+                ) : (
+                  <span>{formatCurrency(deliveryPrice)}</span>
+                )}
               </div>
             </div>
             <div className="border-t border-slate-200 pt-4 mb-8">
               <div className="flex flex-col mb-2">
                 <span className="text-lg font-bold text-slate-900">Total a pagar</span>
-                <span className="text-3xl font-black text-benmarket-600 text-right mt-2">{formatCurrency(total + deliveryPrice)}</span>
+                <span className="text-3xl font-black text-benmarket-600 text-right mt-2">{formatCurrency(grandTotal)}</span>
               </div>
               <p className="text-xs text-slate-500 mt-2 text-right">Impuestos incluidos</p>
             </div>
@@ -170,7 +205,7 @@ export default function Cart() {
       >
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total a pagar</span>
-          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(total + deliveryPrice)}</span>
+          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(grandTotal)}</span>
         </div>
         <button
           onClick={handleCheckout}
