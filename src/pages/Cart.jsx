@@ -194,23 +194,6 @@ export default function Cart() {
         </div>
       </div>
 
-      {/* Sticky Bottom Checkout Footer for Mobile */}
-      <div 
-        className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] p-4 flex items-center justify-between gap-4 md:hidden"
-        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
-      >
-        <div className="flex flex-col">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total a pagar</span>
-          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(grandTotal)}</span>
-        </div>
-        <button
-          onClick={handleCheckout}
-          className="flex-1 bg-primary text-white font-extrabold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md shadow-primary/20"
-        >
-          <span>Finalizar Pedido</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </div>
     </div>
   );
 }

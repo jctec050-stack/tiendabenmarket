@@ -242,10 +242,10 @@ export default function Checkout() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10">
         {/* Formulario */}
-        <div>
-          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-5">
+        <div className="card p-6 md:p-8 bg-white shadow-sm border border-slate-100">
+          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
 
             {/* Datos personales */}
             <div className="flex items-center gap-2 mb-1">
@@ -253,7 +253,7 @@ export default function Checkout() {
               <h2 className="text-lg font-bold text-slate-800">Datos personales</h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nombre <span className="text-red-500">*</span></label>
                 <input
@@ -299,7 +299,8 @@ export default function Checkout() {
             {/* Dirección de envío */}
             {shippingMethod === 'delivery' ? (
               <>
-                <div className="pt-2 flex items-center gap-2 mb-1">
+                <hr className="border-slate-100 my-6" />
+                <div className="flex items-center gap-2 mb-1">
                   <MapPin className="w-5 h-5 text-benmarket-600" />
                   <h2 className="text-lg font-bold text-slate-800">Dirección de entrega</h2>
                 </div>
@@ -317,7 +318,7 @@ export default function Checkout() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Barrio</label>
                     <input
@@ -357,24 +358,28 @@ export default function Checkout() {
                 </div>
               </>
             ) : (
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 mt-4 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="bg-primary/10 p-2.5 rounded-xl text-primary mt-0.5 shrink-0 animate-pulse">
-                    <Store className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Retiro en local BenMarket</h4>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      Podés pasar a retirar tu pedido en nuestro local de Ciudad del Este.
-                    </p>
-                    <p className="text-[11px] text-slate-400 font-semibold mt-1">
-                      Horario de atención: Lunes a Sábados de 08:00 a 18:00 hs.
-                    </p>
+              <>
+                <hr className="border-slate-100 my-6" />
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 mt-4 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary/10 p-2.5 rounded-xl text-primary mt-0.5 shrink-0 animate-pulse">
+                      <Store className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">Retiro en local BenMarket</h4>
+                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                        Podés pasar a retirar tu pedido en nuestro local de Ciudad del Este.
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-semibold mt-1">
+                        Horario de atención: Lunes a Sábados de 08:00 a 18:00 hs.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </>
             )}
 
+            <hr className="border-slate-100 my-6" />
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Nota / Referencia adicional</label>
               <textarea
@@ -479,28 +484,6 @@ export default function Checkout() {
         </div>
       </div>
 
-      {/* Sticky Bottom Confirm Bar for Mobile */}
-      <div 
-        className="fixed bottom-16 left-0 right-0 z-30 bg-white border-t border-slate-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] p-4 flex items-center justify-between gap-4 md:hidden"
-        style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}
-      >
-        <div className="flex flex-col">
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total</span>
-          <span className="text-xl font-black text-primary tracking-tight">{formatCurrency(grandTotal)}</span>
-        </div>
-        <button
-          type="submit"
-          form="checkout-form"
-          disabled={isSubmitting}
-          className="flex-1 bg-primary text-white font-extrabold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5">
-            <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
-            <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
-          </svg>
-          <span>{isSubmitting ? 'Procesando...' : 'Confirmar Compra'}</span>
-        </button>
-      </div>
     </div>
   );
 }

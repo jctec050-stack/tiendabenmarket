@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
-import { Package, Truck, Store, ChevronDown, ChevronUp, Clock, SearchX } from 'lucide-react';
+import { Package, Truck, Store, ChevronDown, ChevronUp, Clock, SearchX, Trash2 } from 'lucide-react';
 
 export default function Orders() {
   const { user } = useAuth();
@@ -36,6 +36,7 @@ export default function Orders() {
           .from('pedidos')
           .select('*')
           .eq('user_id', user.id)
+          .or('oculto_por_cliente.eq.false,oculto_por_cliente.is.null')
           .order('created_at', { ascending: false })
           .limit(50);
 
@@ -57,9 +58,16 @@ export default function Orders() {
         if (!row || row.user_id !== user.id) return;
 
         if (payload.eventType === 'INSERT') {
-          setOrders(prev => [payload.new, ...prev]);
+          if (!payload.new.oculto_por_cliente) {
+            setOrders(prev => [payload.new, ...prev]);
+          }
         } else if (payload.eventType === 'UPDATE') {
-          setOrders(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
+          if (payload.new.oculto_por_cliente) {
+            // Si lo acaban de ocultar, lo removemos de la lista
+            setOrders(prev => prev.filter(p => p.id !== payload.new.id));
+          } else {
+            setOrders(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
+          }
         } else if (payload.eventType === 'DELETE') {
           setOrders(prev => prev.filter(p => p.id !== payload.old.id));
           setExpandedIds(prev => {
@@ -94,6 +102,28 @@ export default function Orders() {
   const statusClassName = (pedido) => {
     const base = statusMeta[pedido.estado]?.cls || 'bg-slate-100 text-slate-700';
     return `inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black ${base}`;
+  };
+
+  const handleHideOrder = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este pedido de tu historial?')) return;
+    
+    // Optimizacion optimista: lo ocultamos del UI de inmediato
+    setOrders(prev => prev.filter(p => p.id !== id));
+    
+    try {
+      const { error } = await supabase
+        .from('pedidos')
+        .update({ oculto_por_cliente: true })
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error al ocultar pedido:', err);
+      alert(`Hubo un error al eliminar el pedido del historial: ${err.message || err.details || 'Error desconocido'}`);
+      // Revertimos el estado optimista si falla
+      setOrders(prev => [...prev]); // trigger re-render
+    }
   };
 
   if (!user) return null;
@@ -244,6 +274,18 @@ export default function Orders() {
                           ))}
                         </div>
                       </div>
+
+                      {pedido.estado === 'Enviado' && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={(e) => handleHideOrder(e, pedido.id)}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar del historial
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

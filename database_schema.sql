@@ -264,7 +264,8 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
     delivery NUMERIC NOT NULL,
     total NUMERIC NOT NULL,
     estado TEXT DEFAULT 'Pendiente' NOT NULL, -- 'Pendiente' | 'Preparando' | 'Enviado'
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    oculto_por_cliente BOOLEAN DEFAULT FALSE
 );
 
 -- Habilitar RLS
