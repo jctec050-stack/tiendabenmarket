@@ -123,16 +123,16 @@ export default function Login() {
               <LogIn className="w-5 h-5" /> {loading ? 'Ingresando...' : 'Ingresar'}
             </button>
 
-            <div className="relative flex items-center justify-center my-4">
+            <div className="relative flex items-center justify-center my-4 hidden">
               <div className="border-t border-slate-200 w-full"></div>
               <span className="absolute bg-white px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">o continuar con</span>
             </div>
 
-            {/* Botón de Google Sign-In */}
+            {/* Botón de Google Sign-In - Oculto temporalmente */}
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full flex justify-center items-center gap-3 py-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition-colors shadow-sm font-bold text-slate-700"
+              className="w-full justify-center items-center gap-3 py-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 transition-colors shadow-sm font-bold text-slate-700 hidden"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
