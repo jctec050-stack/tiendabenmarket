@@ -21,9 +21,9 @@ export default function Checkout() {
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
   const [formData, setFormData] = useState({
-    nombre: user?.name?.split(' ')[0] || '',
-    apellido: user?.name?.split(' ').slice(1).join(' ') || '',
-    telefono: '',
+    nombre: user?.nombre || user?.name?.split(' ')[0] || '',
+    apellido: user?.apellido || user?.name?.split(' ').slice(1).join(' ') || '',
+    telefono: user?.telefono || '',
     direccion: '',
     barrio: '',
     google_maps: '',

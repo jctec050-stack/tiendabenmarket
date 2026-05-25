@@ -57,7 +57,9 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 relative z-10">
         <div className="text-center">
           <div className="mx-auto mb-8 flex justify-center">
-            <img src={logoImg} alt="Logo Benmarket" className="h-20 w-auto object-contain drop-shadow-md" />
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <img src={logoImg} alt="Logo Benmarket" className="h-20 w-auto object-contain drop-shadow-md" />
+            </Link>
           </div>
           <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">Iniciar Sesión</h2>
           <p className="mt-2 text-sm text-slate-600">

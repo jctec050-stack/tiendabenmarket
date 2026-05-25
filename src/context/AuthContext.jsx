@@ -17,7 +17,12 @@ export const AuthProvider = ({ children }) => {
         .maybeSingle();
       
       if (!error && data) {
-        return data;
+        return {
+          ...data,
+          nombre: authUser.user_metadata?.nombre || '',
+          apellido: authUser.user_metadata?.apellido || '',
+          telefono: authUser.user_metadata?.telefono || '',
+        };
       } else {
         // Fallback en caso de que tarde el trigger de DB
         return {
@@ -25,7 +30,10 @@ export const AuthProvider = ({ children }) => {
           name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Usuario',
           email: authUser.email || '',
           role: authUser.user_metadata?.role || 'Cliente',
-          avatar: authUser.user_metadata?.avatar_url || null
+          avatar: authUser.user_metadata?.avatar_url || null,
+          nombre: authUser.user_metadata?.nombre || '',
+          apellido: authUser.user_metadata?.apellido || '',
+          telefono: authUser.user_metadata?.telefono || '',
         };
       }
     } catch (err) {
@@ -35,7 +43,10 @@ export const AuthProvider = ({ children }) => {
         name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'Usuario',
         email: authUser.email || '',
         role: authUser.user_metadata?.role || 'Cliente',
-        avatar: authUser.user_metadata?.avatar_url || null
+        avatar: authUser.user_metadata?.avatar_url || null,
+        nombre: authUser.user_metadata?.nombre || '',
+        apellido: authUser.user_metadata?.apellido || '',
+        telefono: authUser.user_metadata?.telefono || '',
       };
     }
   };
@@ -146,7 +157,12 @@ export const AuthProvider = ({ children }) => {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       if (profile) {
-        setUser(profile);
+        setUser({
+          ...profile,
+          nombre: data.user.user_metadata?.nombre || '',
+          apellido: data.user.user_metadata?.apellido || '',
+          telefono: data.user.user_metadata?.telefono || '',
+        });
         setSessionUser(data.user);
         return true;
       }
@@ -154,13 +170,16 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  const register = async (email, password, name) => {
+  const register = async (email, password, nombre, apellido, celular) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          name: name
+          name: `${nombre} ${apellido}`.trim(),
+          nombre: nombre,
+          apellido: apellido,
+          telefono: celular
         }
       }
     });

@@ -5,7 +5,9 @@ import { UserPlus, Eye, EyeOff } from 'lucide-react';
 import logoImg from '../images/logo.png';
 
 export default function Register() {
-  const [name, setName] = useState('');
+  const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
+  const [celular, setCelular] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,10 +38,12 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const registered = await register(email, password, name);
+      const registered = await register(email, password, nombre, apellido, celular);
       if (registered) {
         setSuccess('¡Registro exitoso! Por favor inicia sesión con tus nuevas credenciales.');
-        setName('');
+        setNombre('');
+        setApellido('');
+        setCelular('');
         setEmail('');
         setPassword('');
         setConfirmPassword('');
@@ -75,7 +79,9 @@ export default function Register() {
       <div className="max-w-md w-full space-y-8 relative z-10">
         <div className="text-center">
           <div className="mx-auto mb-6 flex justify-center">
-            <img src={logoImg} alt="Logo Benmarket" className="h-20 w-auto object-contain drop-shadow-md" />
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <img src={logoImg} alt="Logo Benmarket" className="h-20 w-auto object-contain drop-shadow-md" />
+            </Link>
           </div>
           <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight">Crear Cuenta</h2>
           <p className="mt-2 text-sm text-slate-600">
@@ -100,15 +106,43 @@ export default function Register() {
           )}
           
           <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  required
+                  className="input-field bg-slate-50 focus:bg-white transition-colors"
+                  placeholder="Tu nombre"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Apellido</label>
+                <input
+                  type="text"
+                  required
+                  className="input-field bg-slate-50 focus:bg-white transition-colors"
+                  placeholder="Tu apellido"
+                  value={apellido}
+                  onChange={(e) => setApellido(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre Completo</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Celular</label>
               <input
-                type="text"
+                type="tel"
                 required
                 className="input-field bg-slate-50 focus:bg-white transition-colors"
-                placeholder="Tu nombre y apellido"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej: 0981 123 456"
+                value={celular}
+                onChange={(e) => setCelular(e.target.value)}
                 disabled={loading}
               />
             </div>
