@@ -4,21 +4,32 @@ import ProductCard from '../components/ProductCard';
 import { 
   Search, ArrowRight, Sparkles, ShoppingBag, 
   Coffee, Carrot, Cookie, Milk, SearchX, 
-  Mail, LayoutGrid, Leaf
+  Mail, LayoutGrid, Leaf, Beer, Apple,
+  Beef, Egg, Scissors, Baby, Dog, 
+  Cross, Cigarette, IceCream, Wheat, GlassWater
 } from 'lucide-react';
 
 const getCategoryIcon = (cat) => {
-  switch (cat) {
-    case 'Todos': return <LayoutGrid size={20} />;
-    case 'Comida': return <Carrot size={20} />;
-    case 'Bebidas': return <Coffee size={20} />;
-    case 'Snacks': return <Cookie size={20} />;
-    case 'Lácteos': return <Milk size={20} />;
-    case 'Limpieza': return <Sparkles size={20} />;
-    case 'Despensa': return <ShoppingBag size={20} />;
-    case 'Frescos': return <Leaf size={20} />;
-    default: return <ShoppingBag size={20} />;
-  }
+  const normalizedCat = cat.toLowerCase();
+  
+  if (normalizedCat.includes('bebida') || normalizedCat.includes('gaseosa') || normalizedCat.includes('jugo') || normalizedCat.includes('agua')) return <GlassWater size={20} />;
+  if (normalizedCat.includes('cerveza') || normalizedCat.includes('alcohol') || normalizedCat.includes('vino') || normalizedCat.includes('licor')) return <Beer size={20} />;
+  if (normalizedCat.includes('snack') || normalizedCat.includes('galletita') || normalizedCat.includes('bocadito')) return <Cookie size={20} />;
+  if (normalizedCat.includes('lácteo') || normalizedCat.includes('lacteo') || normalizedCat.includes('leche') || normalizedCat.includes('queso') || normalizedCat.includes('yogur')) return <Milk size={20} />;
+  if (normalizedCat.includes('limpieza') || normalizedCat.includes('hogar') || normalizedCat.includes('lavado')) return <Sparkles size={20} />;
+  if (normalizedCat.includes('fruta') || normalizedCat.includes('verdura') || normalizedCat.includes('fresco') || normalizedCat.includes('vegetal')) return <Apple size={20} />;
+  if (normalizedCat.includes('carne') || normalizedCat.includes('pollo') || normalizedCat.includes('cerdo') || normalizedCat.includes('embutido') || normalizedCat.includes('fiambre')) return <Beef size={20} />;
+  if (normalizedCat.includes('huevo')) return <Egg size={20} />;
+  if (normalizedCat.includes('cuidado personal') || normalizedCat.includes('higiene') || normalizedCat.includes('belleza') || normalizedCat.includes('perfumería')) return <Scissors size={20} />;
+  if (normalizedCat.includes('bebé') || normalizedCat.includes('infantil') || normalizedCat.includes('pañal')) return <Baby size={20} />;
+  if (normalizedCat.includes('mascota') || normalizedCat.includes('perro') || normalizedCat.includes('gato') || normalizedCat.includes('animal')) return <Dog size={20} />;
+  if (normalizedCat.includes('farmacia') || normalizedCat.includes('salud') || normalizedCat.includes('medicamento')) return <Cross size={20} />;
+  if (normalizedCat.includes('cigarrillo') || normalizedCat.includes('tabaco') || normalizedCat.includes('vape')) return <Cigarette size={20} />;
+  if (normalizedCat.includes('helado') || normalizedCat.includes('postre') || normalizedCat.includes('congelado')) return <IceCream size={20} />;
+  if (normalizedCat.includes('panadería') || normalizedCat.includes('pan') || normalizedCat.includes('harina') || normalizedCat.includes('pasta')) return <Wheat size={20} />;
+  if (normalizedCat.includes('despensa') || normalizedCat.includes('almacén') || normalizedCat.includes('almacen')) return <ShoppingBag size={20} />;
+  
+  return <ShoppingBag size={20} />;
 };
 
 export default function Home() {
@@ -197,8 +208,8 @@ export default function Home() {
 
       {/* Categories Scroller */}
       {!globalSearchQuery && (
-        <section className="mb-10 sm:mb-16 max-w-7xl mx-auto relative">
-          <div className="flex items-center justify-between px-4 sm:px-6 mb-4 sm:mb-6">
+        <section className="mb-4 sm:mb-6 max-w-7xl mx-auto relative">
+          <div className="flex items-center justify-between px-4 sm:px-6 mb-2 sm:mb-4">
             <h2 className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-on-surface">Nuestros Productos</h2>
           </div>
           
@@ -248,8 +259,8 @@ export default function Home() {
       )}
 
       {/* Product Grid */}
-      <section ref={gridRef} className="px-4 sm:px-6 mb-20 sm:mb-24 max-w-7xl mx-auto scroll-mt-24">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 sm:mb-10 gap-3 sm:gap-4">
+      <section ref={gridRef} className="px-4 sm:px-6 mb-20 sm:mb-24 max-w-7xl mx-auto scroll-mt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-2 sm:mb-4 gap-3 sm:gap-4">
           <div>
             {globalSearchQuery && (
               <>

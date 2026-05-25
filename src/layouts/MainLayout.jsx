@@ -50,10 +50,10 @@ export default function MainLayout() {
         </div>
 
         <div className="max-w-7xl mx-auto mt-8 sm:mt-8 pt-6 sm:pt-5 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-widest text-white/50 font-bold gap-4 sm:gap-0">
-          <span className="text-center md:text-left">© {new Date().getFullYear()} Benmarket - Tu Mercado de Confianza</span>
+          <span className="text-center md:text-left">© {new Date().getFullYear()} Benmarket - Derechos Reservados. | Desarrollado por <a href="https://nexabyte-portafolio.vercel.app/" target="_blank" rel="noopener noreferrer" className="text-white hover:text-primary transition-colors">Nexabyte</a></span>
           <div className="flex gap-6 sm:gap-8 flex-wrap justify-center">
-            <a href="#" className="hover:text-primary transition-colors">Política de Privacidad</a>
-            <a href="#" className="hover:text-primary transition-colors">Términos y Condiciones</a>
+            <Link to="/privacidad" className="hover:text-primary transition-colors">Política de Privacidad</Link>
+            <Link to="/terminos" className="hover:text-primary transition-colors">Términos y Condiciones</Link>
           </div>
         </div>
       </footer>

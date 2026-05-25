@@ -23,6 +23,8 @@ import Faq from './pages/Faq';
 import Contact from './pages/Contact';
 import Orders from './pages/Orders';
 import Favorites from './pages/Favorites';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -86,6 +88,8 @@ export default function App() {
                   <Route path="shipping" element={<Shipping />} />
                   <Route path="faq" element={<Faq />} />
                   <Route path="contact" element={<Contact />} />
+                  <Route path="privacidad" element={<PrivacyPolicy />} />
+                  <Route path="terminos" element={<TermsAndConditions />} />
                 </Route>
 
                 {/* Ruta de Login independiente */}
