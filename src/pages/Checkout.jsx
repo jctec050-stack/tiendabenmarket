@@ -17,6 +17,7 @@ export default function Checkout() {
   const grandTotal = total + finalDeliveryPrice;
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
+  const [whatsappLink, setWhatsappLink] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
 
@@ -111,19 +112,20 @@ export default function Checkout() {
       const targetNumber = whatsappNumber || import.meta.env.VITE_WHATSAPP_NUMBER || '595981000000';
       const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodedMessage}`;
       
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      setWhatsappLink(whatsappUrl);
       clearCart();
       setSuccess(true);
     } catch (err) {
       console.error("Error creating order:", err);
-      alert("Hubo un error al procesar tu pedido en el sistema. De todos modos te redirigiremos a WhatsApp.");
+      alert("Hubo un error al procesar tu pedido en el sistema. De todos modos podés enviarlo manualmente por WhatsApp.");
       
       // Fallback
       const message = buildWhatsAppMessage();
       const encodedMessage = encodeURIComponent(message);
       const targetNumber = whatsappNumber || import.meta.env.VITE_WHATSAPP_NUMBER || '595981000000';
       const whatsappUrl = `https://wa.me/${targetNumber}?text=${encodedMessage}`;
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+      
+      setWhatsappLink(whatsappUrl);
       clearCart();
       setSuccess(true);
     } finally {
@@ -138,29 +140,40 @@ export default function Checkout() {
           <div className="bg-green-100 p-8 rounded-full">
             <CheckCircle className="w-20 h-20 text-green-500" />
           </div>
-          <div className="absolute -bottom-2 -right-2 bg-[#25D366] p-3 rounded-full shadow-lg">
+          <div className="absolute -bottom-2 -right-2 bg-[#25D366] p-3 rounded-full shadow-lg animate-bounce">
             <MessageCircle className="w-6 h-6 text-white" />
           </div>
         </div>
 
-        <h2 className="text-3xl font-extrabold text-slate-900 mb-3">¡Pedido enviado!</h2>
-        <p className="text-slate-600 mb-2 text-lg">
-          Tu pedido fue enviado a WhatsApp de BenMarket.
-        </p>
-        <p className="text-slate-500 mb-8 text-sm">
-          Si no se abrió automáticamente, revisá que tu navegador no haya bloqueado la ventana emergente.
+        <h2 className="text-3xl font-extrabold text-slate-900 mb-3">¡Pedido registrado!</h2>
+        <p className="text-slate-600 mb-6 text-lg">
+          Para finalizar tu compra, es **necesario** enviar los detalles por WhatsApp a BenMarket.
         </p>
 
-        <div className="bg-[#25D366]/10 border border-[#25D366]/30 rounded-2xl p-5 mb-8 text-left">
-          <p className="text-sm font-semibold text-[#1a9e4e] mb-1">¿Qué sigue?</p>
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full py-4 px-6 rounded-2xl text-white font-bold text-lg flex items-center justify-center gap-3 transition-all shadow-lg active:scale-95 mb-6 hover:brightness-105"
+          style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+            <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+            <path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" />
+          </svg>
+          Enviar pedido por WhatsApp
+        </a>
+
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-8 text-left">
+          <p className="text-sm font-semibold text-slate-800 mb-1">¿Qué sigue?</p>
           <p className="text-sm text-slate-600">
-            Un representante de BenMarket se pondrá en contacto con vos por WhatsApp para confirmar tu pedido y coordinar la entrega.
+            Al tocar el botón de arriba, se abrirá WhatsApp con el mensaje del pedido listo. Presioná enviar en WhatsApp y un funcionario confirmará tu entrega y te proveerá el QR de pago.
           </p>
         </div>
 
         <Link
           to="/"
-          className="btn-primary inline-flex items-center gap-2 px-8 py-3 text-base"
+          className="btn-secondary inline-flex items-center justify-center gap-2 px-8 py-3 text-base w-full sm:w-auto"
         >
           <ArrowLeft className="w-5 h-5" /> Volver a la tienda
         </Link>

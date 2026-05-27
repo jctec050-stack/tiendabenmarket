@@ -1,0 +1,22 @@
+{
+  // Tailwind CSS IntelliSense: apunta al config del proyecto para resolver tokens personalizados
+  "tailwindCSS.experimental.configFile": "./tailwind.config.js",
+
+  // Clases y directivas personalizadas que no deben marcarse como desconocidas
+  "tailwindCSS.classAttributes": ["class", "className", "tw"],
+
+  // Lint: desactivar advertencias por clases desconocidas (nuestros tokens on-primary,
+  // surface-container-low, etc. son válidos aunque no estén en el preset base)
+  "tailwindCSS.lint.unknownAtRules": "ignore",
+  "tailwindCSS.lint.cssConflict": "warning",
+  "tailwindCSS.lint.invalidScreen": "error",
+  "tailwindCSS.lint.invalidVariant": "error",
+  "tailwindCSS.lint.invalidConfigPath": "error",
+  "tailwindCSS.lint.invalidTailwindDirective": "ignore",
+  "tailwindCSS.lint.recommendedVariantOrder": "warning",
+
+  // Evitar que el validador de CSS estándar interfiera con las directivas @tailwind y @layer
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false
+}

@@ -1,13 +1,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { AppProvider } from './context/AppContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
 import DashboardLayout from './layouts/DashboardLayout';
 
-// Pages
+// Pages de clientes — carga inmediata (bundle principal)
 import Home from './pages/Home';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -26,21 +28,25 @@ import Favorites from './pages/Favorites';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
 
-// Admin Pages
-import AdminDashboard from './pages/AdminDashboard';
-import UsersManager from './pages/UsersManager';
-import ProductsManager from './pages/ProductsManager';
-import ThemeManager from './pages/ThemeManager';
+// Pages del Dashboard — carga diferida (chunk separado, solo staff las usa)
+const AdminDashboard    = lazy(() => import('./pages/AdminDashboard'));
+const UsersManager      = lazy(() => import('./pages/UsersManager'));
+const ProductsManager   = lazy(() => import('./pages/ProductsManager'));
+const ThemeManager      = lazy(() => import('./pages/ThemeManager'));
+const SalesHistory      = lazy(() => import('./pages/SalesHistory'));
+const DeliveryManager   = lazy(() => import('./pages/DeliveryManager'));
+const BannersManager    = lazy(() => import('./pages/BannersManager'));
+const TesoreriaDashboard = lazy(() => import('./pages/TesoreriaDashboard'));
+const ValidarArqueos    = lazy(() => import('./pages/ValidarArqueos'));
 
-// Cajero Pages
-import SalesHistory from './pages/SalesHistory';
-import DeliveryManager from './pages/DeliveryManager';
-import BannersManager from './pages/BannersManager';
+// Spinner de carga para el dashboard
+const DashboardSpinner = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
-// Tesoreria Pages
-import TesoreriaDashboard from './pages/TesoreriaDashboard';
-import ValidarArqueos from './pages/ValidarArqueos';
-import { FavoritesProvider } from './context/FavoritesContext';
+
 
 // Componente para proteger rutas según rol
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -98,37 +104,53 @@ export default function App() {
                 <Route path="/confirm" element={<Confirm />} />
                 <Route path="/bienvenida" element={<Bienvenida />} />
 
-                {/* Rutas Privadas / Staff */}
+                {/* Rutas Privadas / Staff — Cargadas de forma diferida (lazy) */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
-                  <Route index element={<DashboardHome />} />
+                  <Route index element={
+                    <Suspense fallback={<DashboardSpinner />}>
+                      <DashboardHome />
+                    </Suspense>
+                  } />
                   <Route path="theme" element={
                     <ProtectedRoute allowedRoles={['Admin']}>
-                      <ThemeManager />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <ThemeManager />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="delivery" element={
                     <ProtectedRoute allowedRoles={['Admin', 'Cajero']}>
-                      <DeliveryManager />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <DeliveryManager />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="users" element={
                     <ProtectedRoute allowedRoles={['Admin']}>
-                      <UsersManager />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <UsersManager />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="products" element={
                     <ProtectedRoute allowedRoles={['Admin', 'Cajero']}>
-                      <ProductsManager />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <ProductsManager />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="banners" element={
                     <ProtectedRoute allowedRoles={['Admin', 'Cajero']}>
-                      <BannersManager />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <BannersManager />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="validations" element={
                     <ProtectedRoute allowedRoles={['Tesoreria']}>
-                      <ValidarArqueos />
+                      <Suspense fallback={<DashboardSpinner />}>
+                        <ValidarArqueos />
+                      </Suspense>
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />

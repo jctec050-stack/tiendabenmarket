@@ -41,13 +41,39 @@ CREATE TABLE IF NOT EXISTS public.productos (
 ALTER TABLE public.categorias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.productos ENABLE ROW LEVEL SECURITY;
 
--- Políticas de acceso para Categorías (Temporalmente públicas para desarrollo)
-CREATE POLICY "Categorias son modificables por todos" ON public.categorias
-    FOR ALL USING (true) WITH CHECK (true);
+-- Políticas de acceso para Categorías
+CREATE POLICY "Categorias legibles por todos" ON public.categorias
+    FOR SELECT USING (true);
 
--- Políticas de acceso para Productos (Temporalmente públicas para desarrollo)
-CREATE POLICY "Productos son modificables por todos" ON public.productos
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Categorias modificables por administradores" ON public.categorias
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    ) WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    );
+
+-- Políticas de acceso para Productos
+CREATE POLICY "Productos legibles por todos" ON public.productos
+    FOR SELECT USING (true);
+
+CREATE POLICY "Productos modificables por administradores" ON public.productos
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    ) WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    );
 
 -- Función para actualizar el campo updated_at automáticamente
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -116,9 +142,19 @@ ALTER TABLE public.configuracion ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Configuracion lectura publica" ON public.configuracion
     FOR SELECT USING (true);
 
--- Solo usuarios autenticados pueden modificar
-CREATE POLICY "Configuracion escritura autenticados" ON public.configuracion
-    FOR ALL USING (true) WITH CHECK (true);
+-- Solo personal autorizado puede modificar la configuracion
+CREATE POLICY "Configuracion modificable por administradores" ON public.configuracion
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    ) WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    );
 
 -- Valor inicial del precio de delivery
 INSERT INTO public.configuracion (clave, valor, descripcion)
@@ -145,9 +181,22 @@ CREATE TABLE IF NOT EXISTS public.banners (
 -- Habilitar Row Level Security (RLS)
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
 
--- Políticas de acceso para Banners (Públicas para desarrollo)
-CREATE POLICY "Banners son modificables por todos" ON public.banners
-    FOR ALL USING (true) WITH CHECK (true);
+-- Políticas de acceso para Banners
+CREATE POLICY "Banners legibles por todos" ON public.banners
+    FOR SELECT USING (true);
+
+CREATE POLICY "Banners modificables por administradores" ON public.banners
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    ) WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero')
+        )
+    );
 
 -- Trigger para updated_at
 CREATE TRIGGER set_updated_at_banners
@@ -202,12 +251,24 @@ CREATE TABLE IF NOT EXISTS public.usuarios (
 -- 2. Habilitar RLS
 ALTER TABLE public.usuarios ENABLE ROW LEVEL SECURITY;
 
--- 3. Políticas públicas temporales para desarrollo
+-- 3. Políticas para Usuarios
 CREATE POLICY "Usuarios son legibles por todos" ON public.usuarios
     FOR SELECT USING (true);
 
-CREATE POLICY "Usuarios son modificables por todos" ON public.usuarios
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Usuarios son modificables por si mismos o por admin" ON public.usuarios
+    FOR ALL USING (
+        id = auth.uid() OR
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role = 'Admin'
+        )
+    ) WITH CHECK (
+        id = auth.uid() OR
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role = 'Admin'
+        )
+    );
 
 -- 4. Trigger para updated_at
 CREATE TRIGGER set_updated_at_usuarios
@@ -271,13 +332,54 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
 -- Habilitar RLS
 ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;
 
--- Políticas de acceso
-CREATE POLICY "Pedidos son legibles por todos" ON public.pedidos
-    FOR SELECT USING (true);
-
+-- Políticas de acceso para Pedidos
 CREATE POLICY "Pedidos son insertables por todos" ON public.pedidos
     FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "Pedidos son modificables por todos" ON public.pedidos
-    FOR UPDATE USING (true) WITH CHECK (true);
+-- Solo el dueño del pedido o personal de la tienda puede leer los datos
+CREATE POLICY "Pedidos legibles por propietarios o staff" ON public.pedidos
+    FOR SELECT USING (
+        (auth.uid() IS NOT NULL AND user_id = auth.uid()) OR
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero', 'Tesoreria')
+        )
+    );
+
+-- Solo personal de la tienda puede actualizar estados
+CREATE POLICY "Pedidos actualizables por staff" ON public.pedidos
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero', 'Tesoreria')
+        )
+    ) WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.usuarios 
+            WHERE usuarios.id = auth.uid() AND usuarios.role IN ('Admin', 'Cajero', 'Tesoreria')
+        )
+    );
+
+-- ==========================================
+-- FUNCIONES RPC DE BASE DE DATOS
+-- ==========================================
+
+-- Función para descontar stock atómicamente en un pedido
+CREATE OR REPLACE FUNCTION public.descontar_stock_pedido(productos_pedido jsonb)
+RETURNS void AS $$
+DECLARE
+  item record;
+BEGIN
+  FOR item IN SELECT * FROM jsonb_to_recordset(productos_pedido) AS x(id text, quantity numeric) LOOP
+    UPDATE public.productos
+    SET cantidad_disponible = cantidad_disponible - item.quantity
+    WHERE codigo_producto = item.id;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Índices de optimización de rendimiento
+CREATE INDEX IF NOT EXISTS idx_productos_categoria ON public.productos(codigo_categoria);
+CREATE INDEX IF NOT EXISTS idx_pedidos_user_id ON public.pedidos(user_id);
+CREATE INDEX IF NOT EXISTS idx_pedidos_created_at ON public.pedidos(created_at DESC);
 

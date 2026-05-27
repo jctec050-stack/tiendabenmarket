@@ -100,26 +100,31 @@ export const AppProvider = ({ children }) => {
         setCategories(mappedCategories);
       }
 
-      // Fetch Users
-      const { data: userData, error: userError } = await supabase
-        .from('usuarios')
-        .select('*')
-        .order('name', { ascending: true });
-      if (userError) {
-        console.error('Error fetching users:', userError);
-      } else {
-        setUsers(userData || []);
-      }
+      // Solo cargar datos pesados si hay sesión activa (Admin/Cajero los necesitan)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        // Fetch Users (solo usuarios autenticados los necesitan)
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('*')
+          .order('name', { ascending: true });
+        if (userError) {
+          console.error('Error fetching users:', userError);
+        } else {
+          setUsers(userData || []);
+        }
 
-      // Fetch Pedidos
-      const { data: pedidosData, error: pedidosError } = await supabase
-        .from('pedidos')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (pedidosError) {
-        console.error('Error fetching pedidos:', pedidosError);
-      } else {
-        setPedidos(pedidosData || []);
+        // Fetch Pedidos — limitado a 200 para no saturar la RAM del cliente
+        const { data: pedidosData, error: pedidosError } = await supabase
+          .from('pedidos')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(200);
+        if (pedidosError) {
+          console.error('Error fetching pedidos:', pedidosError);
+        } else {
+          setPedidos(pedidosData || []);
+        }
       }
     };
     fetchData();
@@ -276,26 +281,20 @@ export const AppProvider = ({ children }) => {
     }
     
     if (data && data[0]) {
-      // Restar el stock de los productos comprados
+      // Restar el stock de los productos comprados atómicamente a través de RPC en Supabase
       try {
-        for (const item of pedido.items) {
-          const { data: prodData } = await supabase
-            .from('productos')
-            .select('cantidad_disponible')
-            .eq('codigo_producto', item.id)
-            .single();
-            
-          if (prodData) {
-            // Se resta la cantidad comprada. Permitimos que vaya a negativo ya que el local opera así.
-            const newStock = Number(prodData.cantidad_disponible) - Number(item.quantity);
-            await supabase
-              .from('productos')
-              .update({ cantidad_disponible: newStock })
-              .eq('codigo_producto', item.id);
-          }
-        }
+        const itemsParaRestar = pedido.items.map(item => ({
+          id: item.id,
+          quantity: Number(item.quantity)
+        }));
+        
+        const { error: rpcError } = await supabase.rpc('descontar_stock_pedido', {
+          productos_pedido: itemsParaRestar
+        });
+        
+        if (rpcError) throw rpcError;
       } catch (stockError) {
-        console.error("Error actualizando el stock:", stockError);
+        console.error("Error actualizando el stock con RPC:", stockError);
       }
 
       setPedidos(prev => [data[0], ...prev]);

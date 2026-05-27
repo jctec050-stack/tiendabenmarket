@@ -139,12 +139,21 @@ export default function Navbar() {
       if (!error) setPendingOrdersCount(Number(count) || 0);
     };
 
+    // Carga inicial del conteo de pendientes
     fetchPendingCount();
 
+    // Refresco periódico cada 30s para mantener el contador exacto (ej: cuando el cajero
+    // confirma un pedido, el contador de la Navbar baja sin depender del WebSocket)
+    const countInterval = setInterval(fetchPendingCount, 30000);
+
+    // Suscripción ligera: solo INSERT para sonido y toast de nuevos pedidos.
+    // SalesHistory maneja UPDATE/DELETE de forma independiente, evitando procesamiento doble.
     const channel = supabase
-      .channel(`realtime-pedidos-navbar-${user.role}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
-        if (payload.eventType === 'INSERT') {
+      .channel(`navbar-alerts-${user.id || user.role}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'pedidos' },
+        (payload) => {
           if (payload.new?.estado === 'Pendiente') {
             setPendingOrdersCount((prev) => prev + 1);
             showToast(payload.new);
@@ -158,29 +167,12 @@ export default function Navbar() {
             }
           }
         }
-
-        if (payload.eventType === 'UPDATE') {
-          const prevEstado = payload.old?.estado;
-          const nextEstado = payload.new?.estado;
-          if (prevEstado !== 'Pendiente' && nextEstado === 'Pendiente') {
-            setPendingOrdersCount((prev) => prev + 1);
-            showToast(payload.new);
-            playNotificationSound();
-          } else if (prevEstado === 'Pendiente' && nextEstado !== 'Pendiente') {
-            setPendingOrdersCount((prev) => Math.max(0, prev - 1));
-          }
-        }
-
-        if (payload.eventType === 'DELETE') {
-          if (payload.old?.estado === 'Pendiente') {
-            setPendingOrdersCount((prev) => Math.max(0, prev - 1));
-          }
-        }
-      })
+      )
       .subscribe();
 
     return () => {
       if (toastTimer) clearTimeout(toastTimer);
+      clearInterval(countInterval);
       supabase.removeChannel(channel);
     };
   }, [user]);

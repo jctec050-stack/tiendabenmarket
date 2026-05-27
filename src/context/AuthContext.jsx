@@ -157,12 +157,6 @@ export const AuthProvider = ({ children }) => {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       if (profile) {
-        setUser({
-          ...profile,
-          nombre: data.user.user_metadata?.nombre || '',
-          apellido: data.user.user_metadata?.apellido || '',
-          telefono: data.user.user_metadata?.telefono || '',
-        });
         setSessionUser(data.user);
         return true;
       }
@@ -218,4 +212,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);

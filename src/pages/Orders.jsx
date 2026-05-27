@@ -53,30 +53,39 @@ export default function Orders() {
 
     const channel = supabase
       .channel(`realtime-user-pedidos-${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, (payload) => {
-        const row = payload.new || payload.old;
-        if (!row || row.user_id !== user.id) return;
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'pedidos', 
+          filter: `user_id=eq.${user.id}` 
+        },
+        (payload) => {
+          const row = payload.new || payload.old;
+          if (!row) return;
 
-        if (payload.eventType === 'INSERT') {
-          if (!payload.new.oculto_por_cliente) {
-            setOrders(prev => [payload.new, ...prev]);
+          if (payload.eventType === 'INSERT') {
+            if (!payload.new.oculto_por_cliente) {
+              setOrders(prev => [payload.new, ...prev]);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            if (payload.new.oculto_por_cliente) {
+              // Si lo acaban de ocultar, lo removemos de la lista
+              setOrders(prev => prev.filter(p => p.id !== payload.new.id));
+            } else {
+              setOrders(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(p => p.id !== payload.old.id));
+            setExpandedIds(prev => {
+              const next = new Set(prev);
+              next.delete(payload.old.id);
+              return next;
+            });
           }
-        } else if (payload.eventType === 'UPDATE') {
-          if (payload.new.oculto_por_cliente) {
-            // Si lo acaban de ocultar, lo removemos de la lista
-            setOrders(prev => prev.filter(p => p.id !== payload.new.id));
-          } else {
-            setOrders(prev => prev.map(p => (p.id === payload.new.id ? payload.new : p)));
-          }
-        } else if (payload.eventType === 'DELETE') {
-          setOrders(prev => prev.filter(p => p.id !== payload.old.id));
-          setExpandedIds(prev => {
-            const next = new Set(prev);
-            next.delete(payload.old.id);
-            return next;
-          });
         }
-      })
+      )
       .subscribe();
 
     return () => {
