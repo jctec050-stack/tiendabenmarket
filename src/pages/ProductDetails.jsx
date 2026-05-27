@@ -18,9 +18,10 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useSEO({
-    title: product ? product.name : 'Buscando producto...',
+    title: loading ? 'Cargando producto...' : product ? product.name : 'Producto no encontrado',
     description: product 
       ? `Comprá ${product.name} al mejor precio en Benmarket Express. Categoría: ${product.category}. Envíos rápidos en Ciudad del Este.` 
       : 'Cargando detalles de producto en Benmarket Express.',
@@ -31,6 +32,7 @@ export default function ProductDetails() {
     let cancelled = false;
 
     const run = async () => {
+      setLoading(true);
       try {
         const found = await getProductById(id);
         if (cancelled) return;
@@ -43,6 +45,8 @@ export default function ProductDetails() {
         }
       } catch (e) {
         if (!cancelled) setProduct(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -53,13 +57,25 @@ export default function ProductDetails() {
     };
   }, [id, getProductById]);
 
-  if (!product) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-slate-500 font-medium">Buscando producto...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">Producto no encontrado</h2>
+        <p className="text-slate-500 mb-6">El producto con código "{id}" no existe o fue retirado del catálogo.</p>
+        <Link to="/" className="bg-primary text-white py-3 px-6 rounded-xl font-bold">
+          Volver a la tienda
+        </Link>
       </div>
     );
   }
