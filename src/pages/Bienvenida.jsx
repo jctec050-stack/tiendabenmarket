@@ -1,8 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
 import logoImg from '../images/logo.png';
+import useSEO from '../utils/useSEO';
 
 export default function Bienvenida() {
+  useSEO({
+    title: '¡Te damos la bienvenida!',
+    noindex: true,
+  });
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-tr from-slate-100 to-slate-50 relative overflow-hidden">
       {/* Background patterns */}

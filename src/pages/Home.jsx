@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import ProductCard from '../components/ProductCard';
+import useSEO from '../utils/useSEO';
 import { 
   Search, ArrowRight, Sparkles, ShoppingBag, 
   Coffee, Carrot, Cookie, Milk, SearchX, 
@@ -44,6 +45,11 @@ export default function Home() {
   const [debouncedQuery, setDebouncedQuery] = useState(globalSearchQuery);
   const gridRef = useRef(null);
   const scrollContainerRef = useRef(null);
+
+  useSEO({
+    title: 'Supermercado Online en Ciudad del Este',
+    description: 'Hacé tus compras online en Benmarket Express. Calidad, rapidez y los mejores precios directo a tu casa en Ciudad del Este.',
+  });
 
   // Volver a la primera página cuando cambie la categoría o la búsqueda
   useEffect(() => {
@@ -152,6 +158,8 @@ export default function Home() {
 
   return (
     <div className="w-full bg-surface">
+      {/* H1 semántico para SEO */}
+      <h1 className="sr-only">Benmarket Express | Supermercado Online en Ciudad del Este</h1>
       {/* Hero Section / Banner Slider */}
       {!bannersReady ? (
         <section className="mb-8 sm:mb-16 pt-0 relative">
@@ -209,9 +217,7 @@ export default function Home() {
       {/* Categories Scroller */}
       {!globalSearchQuery && (
         <section className="mb-4 sm:mb-6 max-w-7xl mx-auto relative">
-          <div className="flex items-center justify-between px-4 sm:px-6 mb-2 sm:mb-4">
-            <h2 className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-on-surface">Nuestros Productos</h2>
-          </div>
+          <h2 className="sr-only">Nuestros Productos</h2>
           
           <div 
             ref={scrollContainerRef}

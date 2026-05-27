@@ -6,6 +6,7 @@ import { ArrowLeft, ShoppingCart, Plus, Minus, Heart, ShieldCheck, Truck, Rotate
 import { useState, useEffect } from 'react';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
+import useSEO from '../utils/useSEO';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -17,6 +18,13 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+
+  useSEO({
+    title: product ? product.name : 'Buscando producto...',
+    description: product 
+      ? `Comprá ${product.name} al mejor precio en Benmarket Express. Categoría: ${product.category}. Envíos rápidos en Ciudad del Este.` 
+      : 'Cargando detalles de producto en Benmarket Express.',
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);

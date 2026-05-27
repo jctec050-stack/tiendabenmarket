@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { Loader2 } from 'lucide-react';
+import useSEO from '../utils/useSEO';
 
 export default function Confirm() {
   const navigate = useNavigate();
   const [error, setError] = useState('');
+
+  useSEO({
+    title: 'Confirmando tu cuenta',
+    noindex: true,
+  });
 
   useEffect(() => {
     // Escuchar el estado de autenticación de Supabase.
