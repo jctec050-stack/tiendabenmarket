@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import { sales as mockSales, cashReconciliations as mockArqueos } from '../data/mock';
 import { supabase } from '../supabaseClient';
 import tiendaImg from '../images/tienda.webp';
@@ -14,6 +14,11 @@ const PRODUCT_PLACEHOLDER_IMAGE =
 
 export const AppProvider = ({ children }) => {
   const [productById, setProductById] = useState({});
+  const productByIdRef = useRef(productById);
+
+  useEffect(() => {
+    productByIdRef.current = productById;
+  }, [productById]);
   const [sales, setSales] = useState(mockSales);
   const [arqueos, setArqueos] = useState(mockArqueos);
   const [users, setUsers] = useState([]);
@@ -181,9 +186,9 @@ export const AppProvider = ({ children }) => {
     return { items, hasMore, total: count };
   };
 
-  const getProductById = async (id) => {
+  const getProductById = useCallback(async (id) => {
     if (!id) return null;
-    if (productById[id]) return productById[id];
+    if (productByIdRef.current[id]) return productByIdRef.current[id];
 
     const { data, error } = await supabase
       .from('productos')
@@ -208,7 +213,7 @@ export const AppProvider = ({ children }) => {
 
     setProductById(prev => ({ ...prev, [id]: mapped }));
     return mapped;
-  };
+  }, []);
 
   // Funciones de Productos
   const addProduct = async (product) => {
