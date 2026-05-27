@@ -1,7 +1,7 @@
 import { Outlet, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import BottomNavigation from '../components/BottomNavigation';
-import logoImg from '../images/logo.png';
+import logoImg from '../images/logo_new.webp';
 import { Instagram, Facebook, Phone } from 'lucide-react'; // Phone es la mejor alternativa nativa para Whatsapp en lucide
 
 export default function MainLayout() {

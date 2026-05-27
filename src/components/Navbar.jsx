@@ -4,7 +4,7 @@ import { ShoppingCart, LogOut, Store, ShieldCheck, Calculator, Wallet, UserCircl
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useAppContext } from '../context/AppContext';
-import logoImg from '../images/logo.png';
+import logoImg from '../images/logo_new.webp';
 import { supabase } from '../supabaseClient';
 import { useFavorites } from '../context/FavoritesContext';
 

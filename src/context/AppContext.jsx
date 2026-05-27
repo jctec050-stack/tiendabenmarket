@@ -1,8 +1,8 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { sales as mockSales, cashReconciliations as mockArqueos } from '../data/mock';
 import { supabase } from '../supabaseClient';
-import tiendaImg from '../images/tienda.jpg';
-import bannerImg from '../images/banner.png';
+import tiendaImg from '../images/tienda.webp';
+import bannerImg from '../images/banner.webp';
 
 const AppContext = createContext();
 const DEFAULT_BANNERS = [

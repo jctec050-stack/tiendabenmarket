@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
-import logoImg from '../images/logo.png';
+import logoImg from '../images/logo_new.webp';
 import useSEO from '../utils/useSEO';
 
 export default function Bienvenida() {

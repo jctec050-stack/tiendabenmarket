@@ -1,6 +1,6 @@
 import React from 'react';
 import { Store, Heart, ShieldCheck, Leaf } from 'lucide-react';
-import tiendaImg from '../images/tienda.jpg';
+import tiendaImg from '../images/tienda.webp';
 
 export default function About() {
   return (

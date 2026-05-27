@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
-import logoImg from '../images/logo.png';
+import logoImg from '../images/logo_new.webp';
 
 export default function Register() {
   const [nombre, setNombre] = useState('');
