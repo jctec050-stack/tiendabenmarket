@@ -22,7 +22,7 @@ export default function ProductsManager() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const fileInputRef = useRef(null);
   
-  const [formData, setFormData] = useState({ name: '', price: '', category: '', stock: '', image: '' });
+  const [formData, setFormData] = useState({ name: '', price: '', category: '', stock: '', image: '', discount: 0 });
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 250);
@@ -76,10 +76,14 @@ export default function ProductsManager() {
     setImageFile(null);
     if (product) {
       setEditingProduct(product);
-      setFormData({ ...product });
+      setFormData({ 
+        ...product, 
+        price: product.originalPrice !== undefined ? product.originalPrice : product.price,
+        discount: product.discount || 0
+      });
     } else {
       setEditingProduct(null);
-      setFormData({ name: '', price: '', category: categories.length > 0 ? categories[0] : '', stock: '', image: 'https://placehold.co/200x200/ef4444/white?text=Nuevo' });
+      setFormData({ name: '', price: '', category: categories.length > 0 ? categories[0] : '', stock: '', image: 'https://placehold.co/200x200/ef4444/white?text=Nuevo', discount: 0 });
     }
     setIsModalOpen(true);
   };
@@ -113,6 +117,7 @@ export default function ProductsManager() {
         ...formData,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock, 10),
+        discount: parseFloat(formData.discount || 0),
         image: finalImageUrl
       };
 
@@ -261,7 +266,19 @@ export default function ProductsManager() {
                     <span className="font-medium text-slate-900">{product.name}</span>
                   </td>
                   <td className="p-4 text-slate-600">{product.category}</td>
-                  <td className="p-4 text-right font-medium text-slate-900">{formatCurrency(product.price)}</td>
+                  <td className="p-4 text-right">
+                    <div className="flex flex-col items-end">
+                      {product.discount > 0 ? (
+                        <>
+                          <span className="font-bold text-slate-900">{formatCurrency(product.price)}</span>
+                          <span className="text-xs text-slate-400 line-through">{formatCurrency(product.originalPrice)}</span>
+                          <span className="text-[10px] text-red-600 font-bold bg-red-50 px-1.5 py-0.5 rounded mt-0.5">-{product.discount}%</span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-slate-900">{formatCurrency(product.price)}</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-4 text-right">
                     <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                       product.stock === 0 ? 'bg-red-100 text-red-700' :
@@ -321,10 +338,24 @@ export default function ProductsManager() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Nombre</label>
                 <input required type="text" className="input-field" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Precio (PYG)</label>
                   <input required type="number" step="1" min="0" className="input-field" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Descuento</label>
+                  <select className="input-field" value={formData.discount || 0} onChange={e => setFormData({...formData, discount: Number(e.target.value)})}>
+                    <option value={0}>0%</option>
+                    <option value={5}>5%</option>
+                    <option value={10}>10%</option>
+                    <option value={15}>15%</option>
+                    <option value={20}>20%</option>
+                    <option value={25}>25%</option>
+                    <option value={30}>30%</option>
+                    <option value={40}>40%</option>
+                    <option value={50}>50%</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Stock</label>

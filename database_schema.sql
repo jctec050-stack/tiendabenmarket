@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS public.productos (
     lista_dos NUMERIC(15, 2) DEFAULT 0,
     cantidad NUMERIC(15, 2) DEFAULT 0,
     cantidad_disponible NUMERIC(15, 2) DEFAULT 0,
+    descuento NUMERIC(5, 2) DEFAULT 0,
     tasa_impuesto NUMERIC(5, 2) DEFAULT 0,
     metodo_costeo TEXT,
     codigo_barras TEXT,

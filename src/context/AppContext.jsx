@@ -147,7 +147,7 @@ export const AppProvider = ({ children }) => {
 
     let query = supabase
       .from('productos')
-      .select('codigo_producto,nombre,precio,cantidad_disponible,foto_url,categorias(nombre)', { count: 'estimated' })
+      .select('codigo_producto,nombre,precio,cantidad_disponible,foto_url,descuento,categorias(nombre)', { count: 'estimated' })
       .order('nombre', { ascending: true });
 
     if (categoryCode) {
@@ -172,32 +172,43 @@ export const AppProvider = ({ children }) => {
       throw error;
     }
 
-    const items = (data || []).map(p => ({
-      id: p.codigo_producto,
-      name: p.nombre,
-      price: p.precio,
-      stock: p.cantidad_disponible,
-      image: p.foto_url || PRODUCT_PLACEHOLDER_IMAGE,
-      category: p.categorias?.nombre || 'Sin Categoría'
-    }));
+    const items = (data || []).map(p => {
+      const desc = Number(p.descuento) || 0;
+      const basePrice = Number(p.precio) || 0;
+      const activePrice = desc > 0 ? basePrice * (1 - desc / 100) : basePrice;
+      return {
+        id: p.codigo_producto,
+        name: p.nombre,
+        originalPrice: basePrice,
+        price: activePrice,
+        discount: desc,
+        stock: p.cantidad_disponible,
+        image: p.foto_url || PRODUCT_PLACEHOLDER_IMAGE,
+        category: p.categorias?.nombre || 'Sin Categoría'
+      };
+    });
 
     const hasMore = typeof count === 'number' ? to + 1 < count : items.length === pageSize;
 
     return { items, hasMore, total: count };
   };
 
-  const getProductById = useCallback(async (id) => {
+  const getProductById = useCallback(async (id, forceRefresh = true) => {
     if (!id) return null;
     
     const decodedId = decodeURIComponent(id);
     const keysToTry = Array.from(new Set([decodedId, id]));
 
-    for (const key of keysToTry) {
-      if (productByIdRef.current[key]) return productByIdRef.current[key];
+    if (!forceRefresh) {
+      for (const key of keysToTry) {
+        if (productByIdRef.current[key]) return productByIdRef.current[key];
+      }
+    }
 
+    for (const key of keysToTry) {
       const { data, error } = await supabase
         .from('productos')
-        .select('codigo_producto,nombre,precio,cantidad_disponible,foto_url,categorias(nombre)')
+        .select('codigo_producto,nombre,precio,cantidad_disponible,foto_url,descuento,categorias(nombre)')
         .eq('codigo_producto', key)
         .maybeSingle();
 
@@ -207,10 +218,15 @@ export const AppProvider = ({ children }) => {
       }
 
       if (data) {
+        const desc = Number(data.descuento) || 0;
+        const basePrice = Number(data.precio) || 0;
+        const activePrice = desc > 0 ? basePrice * (1 - desc / 100) : basePrice;
         const mapped = {
           id: data.codigo_producto,
           name: data.nombre,
-          price: data.precio,
+          originalPrice: basePrice,
+          price: activePrice,
+          discount: desc,
           stock: data.cantidad_disponible,
           image: data.foto_url || PRODUCT_PLACEHOLDER_IMAGE,
           category: data.categorias?.nombre || 'Sin Categoría'
@@ -234,6 +250,7 @@ export const AppProvider = ({ children }) => {
       precio: product.price,
       cantidad_disponible: product.stock,
       foto_url: product.image,
+      descuento: product.discount || 0,
       codigo_categoria: cat ? cat.codigo_categoria : null
     };
     
@@ -242,7 +259,17 @@ export const AppProvider = ({ children }) => {
       console.error('Error adding product:', error);
       throw error;
     } else if (data) {
-      setProductById(prev => ({ ...prev, [newId]: { ...product, id: newId } }));
+      const basePrice = Number(product.price) || 0;
+      const desc = Number(product.discount) || 0;
+      const activePrice = desc > 0 ? basePrice * (1 - desc / 100) : basePrice;
+      const mapped = {
+        ...product,
+        id: newId,
+        originalPrice: basePrice,
+        price: activePrice,
+        discount: desc
+      };
+      setProductById(prev => ({ ...prev, [newId]: mapped }));
     }
   };
 
@@ -252,6 +279,7 @@ export const AppProvider = ({ children }) => {
     if (updated.price !== undefined) dbProduct.precio = updated.price;
     if (updated.stock !== undefined) dbProduct.cantidad_disponible = updated.stock;
     if (updated.image !== undefined) dbProduct.foto_url = updated.image;
+    if (updated.discount !== undefined) dbProduct.descuento = updated.discount;
     if (updated.category !== undefined) {
       const cat = rawCategories.find(c => c.nombre === updated.category);
       dbProduct.codigo_categoria = cat ? cat.codigo_categoria : null;
@@ -262,7 +290,22 @@ export const AppProvider = ({ children }) => {
       console.error('Error updating product:', error);
       throw error;
     } else if (data) {
-      setProductById(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...updated, id } }));
+      setProductById(prev => {
+        const existing = prev[id] || {};
+        const newBasePrice = updated.price !== undefined ? Number(updated.price) : (existing.originalPrice || existing.price || 0);
+        const newDesc = updated.discount !== undefined ? Number(updated.discount) : (existing.discount || 0);
+        const newActivePrice = newDesc > 0 ? newBasePrice * (1 - newDesc / 100) : newBasePrice;
+        
+        const mapped = {
+          ...existing,
+          ...updated,
+          id,
+          originalPrice: newBasePrice,
+          price: newActivePrice,
+          discount: newDesc
+        };
+        return { ...prev, [id]: mapped };
+      });
     }
   };
 
@@ -508,6 +551,7 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider value={{
       categories, rawCategories,
+      productById,
       fetchProductsPage,
       getProductById,
       addProduct, updateProduct, deleteProduct,

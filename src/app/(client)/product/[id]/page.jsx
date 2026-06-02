@@ -14,15 +14,17 @@ import useSEO from '../../../../utils/useSEO';
 export default function ProductDetailsPage() {
   const params = useParams();
   const id = params?.id;
+  const decodedId = decodeURIComponent(id || '');
   const router = useRouter();
-  const { getProductById } = useAppContext();
+  const { getProductById, productById } = useAppContext();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [product, setProduct] = useState(null);
+  
+  const product = productById[decodedId] || productById[id];
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!product);
 
   useSEO({
     title: loading ? 'Cargando producto...' : product ? product.name : 'Producto no encontrado',
@@ -39,19 +41,13 @@ export default function ProductDetailsPage() {
     let cancelled = false;
 
     const run = async () => {
-      setLoading(true);
+      if (!product) {
+        setLoading(true);
+      }
       try {
-        const found = await getProductById(id);
-        if (cancelled) return;
-        if (found) {
-          setProduct(found);
-          setQuantity(1);
-          setIsAdded(false);
-        } else {
-          setProduct(null);
-        }
+        await getProductById(id, true);
       } catch (e) {
-        if (!cancelled) setProduct(null);
+        console.error(e);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,7 +60,7 @@ export default function ProductDetailsPage() {
     };
   }, [id, getProductById]);
 
-  if (loading) {
+  if (loading && !product) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="animate-pulse flex flex-col items-center">
@@ -142,9 +138,18 @@ export default function ProductDetailsPage() {
         <div className="flex flex-col justify-center">
           <span className="text-xs sm:text-sm font-bold text-primary uppercase tracking-widest mb-3 bg-primary/10 w-fit px-3 py-1 rounded-full">{product.category}</span>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight mb-4">{product.name}</h1>
-          
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-wrap items-baseline gap-3 mb-6">
             <span className="text-4xl font-black text-slate-900">{formatCurrency(product.price)}</span>
+            {product.discount > 0 && (
+              <>
+                <span className="text-xl text-slate-400 line-through font-bold">
+                  {formatCurrency(product.originalPrice)}
+                </span>
+                <span className="bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider self-center">
+                  {Math.round(product.discount)}% OFF
+                </span>
+              </>
+            )}
           </div>
 
           {/* Estado del stock */}

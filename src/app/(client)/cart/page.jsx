@@ -64,7 +64,14 @@ export default function CartPage() {
               <div className="flex-grow min-w-0 pr-6 sm:pr-0">
                 <p className="text-[10px] sm:text-xs font-bold text-primary mb-0.5 uppercase tracking-widest">{item.category}</p>
                 <h3 className="text-sm sm:text-lg font-bold text-slate-800 line-clamp-1 leading-snug">{item.name}</h3>
-                <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-0.5">{formatCurrency(item.price)} c/u</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xs sm:text-sm text-slate-500 font-semibold">{formatCurrency(item.price)} c/u</p>
+                  {item.discount > 0 && (
+                    <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+                      {formatCurrency(item.originalPrice)}
+                    </span>
+                  )}
+                </div>
                 
                 {/* Mobile-only subtotal and counter */}
                 <div className="flex sm:hidden items-center justify-between mt-2">

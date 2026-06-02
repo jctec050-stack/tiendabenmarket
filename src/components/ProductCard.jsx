@@ -31,6 +31,11 @@ export default function ProductCard({ product }) {
         
         {/* Badges */}
         <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex flex-col gap-1.5 sm:gap-2 z-10">
+          {product.discount > 0 && (
+            <span className="bg-red-600 text-white text-[9px] sm:text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+              -{Math.round(product.discount)}% OFF
+            </span>
+          )}
           {product.stock <= 5 && product.stock > 0 && (
             <span className="bg-tertiary text-on-tertiary text-[9px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1 backdrop-blur-md bg-tertiary/90">
               <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
@@ -72,7 +77,14 @@ export default function ProductCard({ product }) {
         
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-outline-variant/20">
           <div className="flex flex-col">
-            <span className="text-base sm:text-xl font-black text-on-surface tracking-tight">{formatCurrency(product.price)}</span>
+            {product.discount > 0 && (
+              <span className="text-[10px] sm:text-xs text-slate-400 line-through font-medium leading-none mb-1">
+                {formatCurrency(product.originalPrice)}
+              </span>
+            )}
+            <span className="text-base sm:text-xl font-black text-on-surface tracking-tight">
+              {formatCurrency(product.price)}
+            </span>
           </div>
           <button 
             onClick={(e) => {
